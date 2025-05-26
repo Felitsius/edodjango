@@ -1,0 +1,222 @@
+{% extends "work/work.html" %}
+{% load static %}
+{% block title %}Профиль{% endblock %}
+{% block style %}<link href="{% static 'css/profile.css' %}" rel="stylesheet">{% endblock %}
+{% block content %}
+    <!-- Шапка профиля -->
+    <div class="profile-header py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center text-md-start">
+                    <img src="https://via.placeholder.com/150" alt="Аватар" class="avatar-profile rounded-circle mb-3 mb-md-0 bg-light">
+                </div>
+                <div class="col-md-8 text-center text-md-start">
+                    <h2 class="mb-1 fw-bold">Иванов Иван Иванович</h2>
+                    <p class="mb-2 text-muted"><i class="fas fa-briefcase me-2"></i>Менеджер по документообороту</p>
+                    <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2">
+                        <span class="badge bg-dark"><i class="fas fa-circle me-1 small"></i>Online</span>
+                        <span class="badge badge-light"><i class="fas fa-building me-1"></i>ООО "Компания"</span>
+                    </div>
+                </div>
+                <div class="col-md-2 text-center text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-outline-dark"><i class="fas fa-pen me-1"></i>Редактировать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основное содержимое -->
+    <div class="container py-4">
+        <div class="row">
+            <!-- Левая колонка -->
+            <div class="col-lg-4 mb-4">
+                <!-- О пользователе -->
+                <div class="profile-card card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fas fa-info-circle me-2"></i>О пользователе</h5>
+                        <p class="card-text text-muted">Ответственный за ведение документооборота в компании. Работаю с ЭДО более 3 лет.</p>
+                        <hr>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-envelope me-2"></i>ivanov@company.ru</li>
+                            <li class="mb-2"><i class="fas fa-phone me-2"></i>+7 (999) 123-45-67</li>
+                            <li class="mb-2"><i class="fas fa-calendar-alt me-2"></i>В системе с 15.03.2020</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Правая колонка -->
+            <div class="col-lg-8">
+                <!-- Навигация по профилю -->
+                <ul class="nav nav-pills mb-4" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="activity-tab" data-bs-toggle="pill" data-bs-target="#activity" type="button" role="tab">
+                            <i class="fas fa-list-ul me-1"></i>Активность
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab">
+                            <i class="fas fa-cog me-1"></i>Настройки
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="pill" data-bs-target="#security" type="button" role="tab">
+                            <i class="fas fa-shield-alt me-1"></i>Безопасность
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Содержимое вкладок -->
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- Вкладка Активность -->
+                    <div class="tab-pane fade show active" id="activity" role="tabpanel">
+                        <div class="profile-card card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex justify-content-between align-items-center fw-bold">
+                                    <span><i class="fas fa-chart-line me-2"></i>Статистика</span>
+                                    <small class="text-muted">Последние 30 дней</small>
+                                </h5>
+                                <div class="row text-center">
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="stat-card p-3">
+                                            <h3 class="fw-bold">124</h3>
+                                            <p class="mb-0 text-muted">Документов</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="stat-card p-3">
+                                            <h3 class="fw-bold">87</h3>
+                                            <p class="mb-0 text-muted">Подписано</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-card p-3">
+                                            <h3 class="fw-bold">42</h3>
+                                            <p class="mb-0 text-muted">Отправлено</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-card card">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold"><i class="fas fa-history me-2"></i>Последние действия</h5>
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-check-circle fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <div class="d-flex justify-content-between">
+                                                <strong>Подписан договор №1245</strong>
+                                                <small class="text-muted">2 часа назад</small>
+                                            </div>
+                                            <small class="text-muted">Контрагент: ООО "Партнер"</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-paper-plane fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <div class="d-flex justify-content-between">
+                                                <strong>Отправлен счет №321</strong>
+                                                <small class="text-muted">5 часов назад</small>
+                                            </div>
+                                            <small class="text-muted">Контрагент: ИП Смирнов А.А.</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <i class="fas fa-file-signature fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <div class="d-flex justify-content-between">
+                                                <strong>Создан акт №78</strong>
+                                                <small class="text-muted">Вчера, 15:30</small>
+                                            </div>
+                                            <small class="text-muted">Проект: "Реконструкция офиса"</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка Настройки -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                        <div class="profile-card card">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold"><i class="fas fa-cog me-2"></i>Настройки профиля</h5>
+                                <form>
+                                    <div class="mb-3">
+                                        <label class="form-label">Имя</label>
+                                        <input type="text" class="form-control" value="Иван">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Фамилия</label>
+                                        <input type="text" class="form-control" value="Иванов">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" value="ivanov@company.ru">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Телефон</label>
+                                        <input type="tel" class="form-control" value="+7 (999) 123-45-67">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Должность</label>
+                                        <input type="text" class="form-control" value="Менеджер по документообороту">
+                                    </div>
+                                    <div class="text-end">
+                                        <button type="submit" class="btn btn-dark">Сохранить изменения</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Вкладка Безопасность -->
+                    <div class="tab-pane fade" id="security" role="tabpanel">
+                        <div class="profile-card card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4 fw-bold"><i class="fas fa-shield-alt me-2"></i>Безопасность</h5>
+                                
+                                <div class="alert alert-light d-flex align-items-center mb-4">
+                                    <i class="fas fa-info-circle me-3"></i>
+                                    <div>
+                                        <strong>Последний вход:</strong> 15.05.2023 в 14:30 с IP 192.168.1.1 (Москва, Россия)
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <h6 class="fw-bold"><i class="fas fa-key me-2"></i>Смена пароля</h6>
+                                    <form>
+                                        <div class="mb-3">
+                                            <label class="form-label">Текущий пароль</label>
+                                            <input type="password" class="form-control">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Новый пароль</label>
+                                            <input type="password" class="form-control">
+                                            <div class="form-text">Пароль должен содержать не менее 8 символов</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Подтвердите новый пароль</label>
+                                            <input type="password" class="form-control">
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="submit" class="btn btn-dark">Изменить пароль</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

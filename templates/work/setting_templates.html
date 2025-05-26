@@ -1,0 +1,207 @@
+{% extends "work/work.html" %}
+{% load static %}
+{% block title %}Настройка шаблонов{% endblock %}
+{% block style %}<link href="{% static 'css/setting_templates.css' %}" rel="stylesheet">{% endblock %}
+{% block script %}
+<script>
+    const mydata = JSON.parse('{{ templates_json|safe }}');
+
+    // Модальное окно для редактирования
+    function addEditTemplate(template_id) {
+
+        const container = document.getElementById('template_edit');
+        let html = '';
+
+        for (const key in mydata) {
+            if ( mydata[key]['id'] == template_id) {
+                                        
+                html = `
+                    <div class="modal fade" id="EditTemplate-${template_id}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold" id="editTemplateModalLabel-${template_id}"><i class="fas fa-plus-circle me-2"></i>Создать новый шаблон</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form id="editTemplateForm-${template_id}" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="edit_template">
+                                    <div class="modal-body">
+                                            <div class="mb-4">
+                                                <label for="templateName-${template_id}" class="form-label fw-bold" >Название шаблона</label>
+                                                <input type="text" class="form-control" name="name" id="templateName-${template_id}" value="${mydata[key]['name']}">
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label for="templateDescription-${template_id}" class="form-label fw-bold">Описание</label>
+                                                <input id="templateDescription-${template_id}" type="text" class="form-control" value="${mydata[key]['description']}" name="description">
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label class="form-label fw-bold">Файл шаблона</label>
+                                                <input type="file" class="form-control" name="template_file" accept=".doc,.docx,.pdf">
+                                                <div class="form-text">Поддерживаемые форматы: .doc, .docx, .pdf</div>
+                                            </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Отмена</button>
+                                        <button type="submit" class="btn btn-dark" name="saveID" value="${template_id}">Сохранить шаблон</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+                var myModal = new bootstrap.Modal(document.getElementById(`EditTemplate-${template_id}`));
+                myModal.show();
+            };
+        }; 
+    };
+</script>
+{% endblock %}
+{% block content %}
+
+    <!-- Шапка страницы -->
+    <div class="settings-header py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0 fw-bold"><i class="fa fa-file me-3"></i>Настройка шаблонов <span class="admin-badge">ADMIN</span></h1>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createProcessModal">
+                        <i class="fas fa-plus me-2"></i>Создать шаблон
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container py-4 mb-5">
+        <!-- Фильтры и поиск -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <form method="GET">
+                    <input type="hidden" name="action" value="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search_template" placeholder="Поиск по названию или описанию...">
+                        <button class="btn btn-outline-dark" type="submit">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-4 mt-2 mt-md-0">
+                <form method="GET">
+                    <input type="hidden" name="action" value="filter">
+                    {% csrf_token %}
+                    <select class="form-select" name="filter_name" onchange="this.form.submit()">
+                        <option value="all_templates" {% if request.GET.filter_name == 'all_templates' or not request.GET.filter_name %}selected{% endif %}>Все шаблоны</option>
+                        <option value="last_templates" {% if request.GET.filter_name == 'last_templates' %}selected{% endif %}>Последние</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Список шаблонов -->
+        <div class="row">
+            {% for template in templates %}
+                <!-- Шаблон -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ template.name }}</h5>
+                            <span class="badge bg-light text-dark"><i class="fa-regular fa-calendar"></i> {{ template.created_at }}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ template.description }}</p>
+                            
+                            <div class="template-fields p-1">
+                                <div class="d-flex flex-wrap">
+                                    {% for field in template.field %}
+                                        <span class="badge field-badge m-1">{{ field }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">Создан: {{ template.created_at }}</small>
+                                <div class="action-buttons d-flex">
+                                    <button class="btn btn-sm btn-outline-dark" onclick="addEditTemplate({{ template.id }})">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete_template">
+                                        <button class="btn btn-sm btn-outline-danger" name="deleteID" value="{{ template.id }}">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Пагинация -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link text-dark" href="#" tabindex="-1">Назад</a>
+                </li>
+                <li class="page-item active"><a class="page-link bg-dark border-dark" href="#">1</a></li>
+                <li class="page-item"><a class="page-link text-dark" href="#">2</a></li>
+                <li class="page-item"><a class="page-link text-dark" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link text-dark" href="#">Вперед</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Модальное окно создания шаблона -->
+    <div class="modal fade" id="createProcessModal" tabindex="-1" aria-labelledby="createProcessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="createProcessModalLabel"><i class="fas fa-plus-circle me-2"></i>Создать новый шаблон</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_template">
+                    <div class="modal-body">
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Название шаблона</label>
+                                <input type="text" class="form-control" name="name" placeholder="Например: 'Стандартный шаблон для отпуска'">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Описание</label>
+                                <input type="text" class="form-control" name="description" placeholder="Например: 'Шаблон для отпуска'">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Файл шаблона</label>
+                                <input type="file" class="form-control" name="template_file" accept=".docx">
+                                <div class="form-text">Поддерживаемые форматы: .docx</div>
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-dark">Сохранить процесс</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования -->
+    <div id="template_edit">
+    </div>
+{% endblock %}

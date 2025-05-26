@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Регестрация{% endblock %}
+{% block content %}
+    <div class="content h-100 d-flex flex-column justify-content-center align-items-center">
+        <h1>Регестрация</h1>
+        <form method="POST" class="p-2 d-flex flex-column justify-content-center align-items-center">
+            {% csrf_token %}
+            <label for="login">Логин</label>
+            <input type="text" name="login" class="form-control mt-1">
+            
+            <label for="password" class="mt-2">Пароль</label>
+            <input type="password" name="password" class="form-control mt-1">
+
+            <label for="password2" class="mt-2">Подтвердите пароль</label>
+            <input type="password2" name="password2" class="form-control mt-1">
+            
+            <button class="btn btn-primary mt-3">Регестрация</button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,557 @@
+{% extends "work/work.html" %}
+{% load static %}
+{% block title %}Документы{% endblock %}
+{% block style %}<link href="{% static 'css/documents.css' %}" rel="stylesheet">{% endblock %}
+{% block script %}
+  
+<script>
+    const data_template = JSON.parse('{{ templates_json|safe }}');
+    const indocument_data = JSON.parse('{{ indocument_json|safe }}');
+    const history_data = JSON.parse('{{ documentHistory_json|safe }}');
+    console.log(history_data)
+    
+    // Скрипт для отображения полей
+    function createFields(template_name) {
+        let html = '';
+        const container = document.getElementById('templateFields');
+        for ( const template in data_template) {
+            let name = data_template[template]['name'];
+            if (name == template_name) {
+                for ( const field in data_template[template]['field']) {
+                    html += `
+                        <div class="col-md-12 mt-2">
+                            <label class="form-label fw-bold">` + data_template[template]['field'][field] + `</label>
+                            <input type="text" class="form-control" name="field">
+                        </div>
+                    `;
+                }
+            }
+        }
+        container.innerHTML = html;
+    }
+
+    // Модальное окно для согласования документа
+    function approveDocument(document_id, name) {
+        const container = document.getElementById('approveDocument');
+        let html = `
+            <div class="modal fade" id="approveDocumentModal-${document_id}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-dark text-white">
+                            <h5 class="modal-title fw-bold">
+                                <i class="fas fa-check-circle me-2"></i>Согласование документа
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>Вы собираетесь согласовать документ: <strong>${name} №${document_id}</strong>
+                            </div>
+                            
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="approve_document">
+                                <input type="hidden" name="approved_id" value="${document_id}">
+                                <div class="mb-3">
+                                    <label for="approveComment-${document_id}" class="form-label fw-bold">
+                                        <i class="fas fa-comment-dots me-1"></i>Комментарий (необязательно)
+                                    </label>
+                                    <textarea class="form-control" name="comment" id="approveComment-${document_id}" rows="3" placeholder="Введите ваш комментарий к документу..."></textarea>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                        <i class="fas fa-times me-1"></i>Отмена
+                                    </button>
+                                    <button type="submit" class="btn btn-dark">
+                                        <i class="fas fa-check me-1"></i>Подтвердить согласование
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+        var myModal = new bootstrap.Modal(document.getElementById(`approveDocumentModal-${document_id}`));
+        myModal.show();
+    };
+
+    // Скрипт для просмотра документов
+    function showDocument(document_id) {
+        const container = document.getElementById('showDocument');
+        let html = '';
+        let workflow = '';
+        let num = 0;
+        for (const index in indocument_data) {
+            if ( indocument_data[index]['id'] == document_id) {
+                for (const workflow_index in indocument_data[index]['workflow_order'] ) {
+                    let position = indocument_data[index]['workflow_order'][workflow_index];
+                    num++;
+                    // history_data
+                    for (const history in history_data ) {
+                        if (history_data[history]['action'] == 'Согласованно' && history_data[history]['document_id'] == document_id) {
+                            workflow += `
+                                <div class="approval-step completed">
+                                    <div class="approval-step-dot"></div>
+                                    <div class="mb-2">
+                                        <strong>${num}. ${history_data[history]['user']}</strong>
+                                        <small class="text-muted d-block">Петрова А.К.</small>
+                                    </div>
+                                    <div class="alert alert-light p-2 mb-2">
+                                        <small><strong>Статус:</strong> ${history_data[history]['action']}</small><br>
+                                        <small><strong>Дата:</strong> ${history_data[history]['created_at']}</small><br>
+                                        <small><strong>Комментарий:</strong>  ${history_data[history]['description']}</small>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+                    
+                html += `
+                    <div class="modal fade" id="viewDocumentModal-${document_id}" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold" id="viewDocumentModalLabel">
+                                        <i class="fas fa-file-contract me-2"></i>${indocument_data[index]['name']} №${indocument_data[index]['id']}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <!-- Предпросмотр документа -->
+                                            <div class="document-preview-lg">
+                                                <i class="fas fa-file-pdf fa-5x text-danger"></i>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-4">
+                                                <div>
+                                                    <span class="text-muted me-3"><i class="fas fa-file-alt me-1"></i>${indocument_data[index]['type']}</span>
+                                                    <span class="text-muted"><i class="fas fa-hashtag me-1"></i>ID: ${indocument_data[index]['id']}</span>
+                                                </div>
+                                                <button class="btn btn-outline-dark">
+                                                    <i class="fas fa-download me-1"></i>Скачать документ
+                                                </button>
+                                            </div>
+                                            
+                                            <!-- Информация о документе -->
+                                            <div class="documents-card card mb-4">
+                                                <div class="card-body">
+                                                    <h6 class="card-title fw-bold"><i class="fas fa-info-circle me-2"></i>Информация о документе</h6>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <p class="mb-2"><strong>Дата создания:</strong> ${indocument_data[index]['created_at'].toLocaleString('ru-RU')}</p>
+                                                            <p class="mb-2"><strong>Автор:</strong> ${indocument_data[index]['author']}</p>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <p class="mb-2"><strong>Статус:</strong> <span class="badge-status badge-waiting">${indocument_data[index]['status']}</span></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-3">
+                                                        <h6 class="fw-bold">Комментарий автора:</h6>
+                                                        <p class="text-muted">${indocument_data[index]['comment']}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <!-- Маршрут согласования -->
+                                            <div class="documents-card card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title fw-bold"><i class="fas fa-route me-2"></i>Маршрут согласования</h6>
+                                                    
+                                                    ` + workflow + `
+
+                                                    <hr class="my-3">
+                                                    
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-dark" onclick="approveDocument(${document_id}, '${indocument_data[index]['name']}')">
+                                                            <i class="fas fa-check me-1"></i>Согласовать
+                                                        </button>
+                                                        <button class="btn btn-outline-dark">
+                                                            <i class="fas fa-times me-1"></i>Отклонить
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Закрыть</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                };
+            };
+        container.innerHTML = html;
+        var myModal = new bootstrap.Modal(document.getElementById(`viewDocumentModal-${document_id}`));
+        myModal.show();
+    }
+
+    document.getElementById('templateSelect').addEventListener('change', function() {
+        const templateFields = document.getElementById('templateFields');
+        if (this.value) {
+            templateFields.style.display = 'block';
+            createFields(this.value)
+        } else {
+            templateFields.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
+{% block content %}
+    <!-- Шапка документов -->
+    <div class="documents-header py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0 fw-bold"><i class="fas fa-folder-open me-3"></i>Документы</h1>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDocumentModal">
+                        <i class="fas fa-plus me-2"></i>Создать документ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основное содержимое -->
+    <div class="container py-4">
+        <!-- Навигация по документам -->
+        <ul class="nav nav-pills mb-4" id="documentsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="incoming-tab" data-bs-toggle="pill" data-bs-target="#incoming" type="button" role="tab">
+                    <i class="fas fa-inbox me-1"></i>Входящие
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="outgoing-tab" data-bs-toggle="pill" data-bs-target="#outgoing" type="button" role="tab">
+                    <i class="fas fa-paper-plane me-1"></i>Исходящие
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="approved-tab" data-bs-toggle="pill" data-bs-target="#approved" type="button" role="tab">
+                    <i class="fas fa-check-circle me-1"></i>Согласованные
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Содержимое вкладок -->
+        <div class="tab-content" id="documentsTabsContent">
+            <!-- Входящие документы -->
+            <div class="tab-pane fade show active" id="incoming" role="tabpanel">
+                <div class="documents-card card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 100px;"></th>
+                                        <th>Документ</th>
+                                        <th>Отправитель</th>
+                                        <th>Дата</th>
+                                        <th>Статус</th>
+                                        <th style="width: 120px;">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for indocument in indocument_list %}
+                                        <tr>
+                                            <td>
+                                                <div class="document-preview">
+                                                    <i class="fas fa-file-word fa-2x text-primary"></i>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong>{{ indocument.name }} №{{ indocument.id }}</strong><br>
+                                                <small class="text-muted">{{ indocument.type }}</small>
+                                            </td>
+                                            <td>{{ indocument.author }}</td>
+                                            <td>{{ indocument.created_at }}</td>
+                                            <td><span class="badge-status badge-waiting">{{ indocument.status }}</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" onclick="showDocument({{ indocument.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark" title="Согласовать" onclick="approveDocument({{ indocument.id }}, '{{ indocument.name }}')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Исходящие документы -->
+            <div class="tab-pane fade" id="outgoing" role="tabpanel">
+                <div class="documents-card card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 100px;"></th>
+                                        <th>Документ</th>
+                                        <th>Получатель</th>
+                                        <th>Дата</th>
+                                        <th>Статус</th>
+                                        <th style="width: 120px;">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="document-preview">
+                                                <i class="fas fa-file-excel fa-2x text-success"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>Счет на оплату №321</strong><br>
+                                            <small class="text-muted">Тип: Счет</small>
+                                        </td>
+                                        <td>ООО "Покупатель"</td>
+                                        <td>13.05.2023</td>
+                                        <td><span class="badge-status badge-waiting">Ожидает согласования</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-dark" title="Отменить">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="document-preview">
+                                                <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>Договор аренды №45</strong><br>
+                                            <small class="text-muted">Тип: Договор</small>
+                                        </td>
+                                        <td>ООО "Арендатор"</td>
+                                        <td>10.05.2023</td>
+                                        <td><span class="badge-status badge-waiting">В процессе подписания</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-dark" title="Отменить">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Согласованные документы -->
+            <div class="tab-pane fade" id="approved" role="tabpanel">
+                <div class="documents-card card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 100px;"></th>
+                                        <th>Документ</th>
+                                        <th>Контрагент</th>
+                                        <th>Дата</th>
+                                        <th>Статус</th>
+                                        <th style="width: 80px;">Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="document-preview">
+                                                <i class="fas fa-file-contract fa-2x"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>Доп.соглашение №1</strong><br>
+                                            <small class="text-muted">Тип: Доп.соглашение</small>
+                                        </td>
+                                        <td>ООО "Партнер"</td>
+                                        <td>05.05.2023</td>
+                                        <td><span class="badge-status badge-approved">Согласован 08.05.2023</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="document-preview">
+                                                <i class="fas fa-file-invoice-dollar fa-2x"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>Акт сверки №5</strong><br>
+                                            <small class="text-muted">Тип: Акт сверки</small>
+                                        </td>
+                                        <td>ООО "Контрагент"</td>
+                                        <td>28.04.2023</td>
+                                        <td><span class="badge-status badge-approved">Согласован 30.04.2023</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="document-preview">
+                                                <i class="fas fa-file-signature fa-2x"></i>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>Договор №201</strong><br>
+                                            <small class="text-muted">Тип: Договор</small>
+                                        </td>
+                                        <td>ИП Иванов И.И.</td>
+                                        <td>20.04.2023</td>
+                                        <td><span class="badge-status badge-rejected">Отклонен 22.04.2023</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания документа -->
+    <div class="modal fade" id="createDocumentModal" tabindex="-1" aria-labelledby="createDocumentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="createDocumentModalLabel"><i class="fas fa-plus-circle me-2"></i>Создать новый документ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-pills mb-4" id="documentCreationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="template-tab" data-bs-toggle="tab" data-bs-target="#template-tab-pane" type="button" role="tab" aria-controls="template-tab-pane" aria-selected="true">
+                                <i class="fas fa-file-alt me-2"></i>Шаблон
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="custom-tab" data-bs-toggle="tab" data-bs-target="#custom-tab-pane" type="button" role="tab" aria-controls="custom-tab-pane" aria-selected="false">
+                                <i class="fas fa-file-upload me-2"></i>Свой документ
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="documentCreationTabsContent">
+                        <!-- Вкладка Шаблон -->
+                        <div class="tab-pane fade show active" id="template-tab-pane" role="tabpanel" aria-labelledby="template-tab" tabindex="0">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="template">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Название документа</label>
+                                    <input type="text" class="form-control" name="name" placeholder="Например: 'Акт выполненных работ'">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Выберите шаблон</label>
+                                    <select class="form-select" id="templateSelect" name="template">
+                                        <option selected disabled>Выберите шаблон документа</option>
+                                        {% for template in templates %}
+                                            <option>{{ template.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Поля, которые появляются при выборе шаблона -->
+                                <div id="templateFields" class="row mb-3" style="display: none;">
+
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Комментарий</label>
+                                    <textarea class="form-control" rows="3" name="comment" placeholder="Введите комментарий к документу (необязательно)"></textarea>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Отмена</button>
+                                    <button type="submit" class="btn btn-dark">Отправить на согласование</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Вкладка Свой документ -->
+                        <div class="tab-pane fade" id="custom-tab-pane" role="tabpanel" aria-labelledby="custom-tab" tabindex="0">
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="my_document">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Название документа</label>
+                                    <input type="text" class="form-control" name="name" placeholder="Например: 'Акт выполненных работ'">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Выберите пользователя</label>
+                                    <select class="form-select" name="user">
+                                        <option selected disabled>Выберите пользователя</option>
+                                        {% for position in positions_list %}
+                                            <option>{{ position }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Комментарий</label>
+                                    <textarea class="form-control" rows="3" name="comment" placeholder="Введите комментарий к документу"></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Файл</label>
+                                    <input type="file" class="form-control" name="file" accept=".doc,.docx,.pdf">
+                                    <div class="form-text">Поддерживаемые форматы: .doc, .docx, .pdf</div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Отмена</button>
+                                    <button type="submit" class="btn btn-dark">Отправить на согласование</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно просмотра документа -->
+    <div id="showDocument">  
+    </div>
+
+    <div id="approveDocument">
+    </div>
+{% endblock %}

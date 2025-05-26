@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400..900&display=swap');
+
+* {
+    font-family: "Tektur", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings:
+      "wdth" 100;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    color: white;
+    padding: 100px 0;
+    margin-bottom: 50px;
+}
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #6e8efb;
+}
+.cta-section {
+    background-color: #f8f9fa;
+    padding: 60px 0;
+    margin-top: 50px;
+}
+
+
+.navbar-brand {
+    font-weight: bold;
+    color: #fff !important;
+    font-size: 2rem;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+}
+
+
+.dropdown-menu {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-link:hover, .nav-link:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+    border-radius: 0.25rem;
+    margin: 0.25rem;
+    padding: 0.5rem 1rem;
+}
+
+
+
+@media (min-width: 768px) {
+    .dropdown-menu-right {
+      right: 0;
+      left: auto;
+    }
+  }
+
+
+  
+.dropdown-item:hover {
+    background-color: #f1f1f1;
+    color: #3d3d3d !important;
+}
+.form-control {
+    border-radius: 20px;
+}
+.btn-outline-light {
+    border-radius: 20px;
+    margin-left: 10px;
+}
+
+
+.card-header{
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-document{
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+.status-not-approved {
+    background-color: #ffcccc;
+    color: #cc0000;
+}
+.status-approved {
+    background-color: #ccffcc;
+    color: #006600;
+}
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.gradient {
+    --bs-table-bg: #2575fc;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-section {
+    margin: 2px -8px;
+    padding: 0 8px;
+    border-radius: 4px;
+}
+
+.admin-section .dropdown-item {
+    font-weight: 500;
+}
+
+.admin-section .badge {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    color: #000;
+}

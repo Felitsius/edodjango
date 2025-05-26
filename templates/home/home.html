@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}home{% endblock %}
+{% block content %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">ЭДО</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Возможности</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#advantages">Преимущества</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contacts">Контакты</a>
+                    </li>
+                </ul>
+                <div class="ms-lg-3 mt-3 mt-lg-0">
+                    {% if users.is_authenticated %}
+                        <a href="/work" class="btn btn-outline-light me-2">Рабочая среда</a>
+                        <a href="/logout" class="btn btn-primary">Выйти</a>
+                    {% else %}
+                        <a href="/login" class="btn btn-outline-light me-2">Вход</a>
+                        <a href="/reg" class="btn btn-primary">Регистрация</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Герой-секция -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-4">Электронный документооборот нового поколения</h1>
+            <p class="lead mb-5">Безопасный, удобный и юридически значимый обмен документами между организациями и внутри компании</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="#" class="btn btn-light btn-lg px-4">Попробовать бесплатно</a>
+                <a href="#" class="btn btn-outline-light btn-lg px-4">Узнать больше</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Основной контент -->
+    <div class="container">
+        <!-- Возможности -->
+        <section id="features" class="mb-5">
+            <h2 class="text-center mb-5">Наши возможности</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-exchange-alt feature-icon"></i>
+                            <h3>Обмен документами</h3>
+                            <p>Быстрая и безопасная отправка документов контрагентам с уведомлениями о получении</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-digital-tachograph feature-icon"></i>
+                            <h3>Электронная подпись</h3>
+                            <p>Подписание документов квалифицированной электронной подписью с юридической силой</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-project-diagram feature-icon"></i>
+                            <h3>Маршрутизация</h3>
+                            <p>Гибкая настройка маршрутов согласования документов внутри организации</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-search feature-icon"></i>
+                            <h3>Поиск и архив</h3>
+                            <p>Мощная система поиска по документам и надежное архивное хранение</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-sync-alt feature-icon"></i>
+                            <h3>Интеграции</h3>
+                            <p>Подключение к 1С, CRM, бухгалтерским и другим корпоративным системам</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-shield-alt feature-icon"></i>
+                            <h3>Безопасность</h3>
+                            <p>Защита данных в соответствии с требованиями регуляторов и стандартами</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Преимущества -->
+        <section id="advantages" class="mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h2 class="mb-4">Почему выбирают нашу систему?</h2>
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <h5><i class="fas fa-check-circle text-success me-2"></i> Юридическая значимость</h5>
+                            <p>Все операции соответствуют требованиям законодательства о электронном документообороте</p>
+                        </li>
+                        <li class="mb-3">
+                            <h5><i class="fas fa-check-circle text-success me-2"></i> Простота использования</h5>
+                            <p>Интуитивно понятный интерфейс, не требующий длительного обучения</p>
+                        </li>
+                        <li class="mb-3">
+                            <h5><i class="fas fa-check-circle text-success me-2"></i> Экономия времени и ресурсов</h5>
+                            <p>Сокращение сроков обработки документов до 80% по сравнению с бумажным оборотом</p>
+                        </li>
+                        <li class="mb-3">
+                            <h5><i class="fas fa-check-circle text-success me-2"></i> Круглосуточная поддержка</h5>
+                            <p>Наши специалисты всегда готовы помочь в решении любых вопросов</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-lg-6">
+                    <img src="https://via.placeholder.com/600x400" alt="Преимущества ЭДО" class="img-fluid rounded shadow">
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Призыв к действию -->
+    <section class="cta-section text-center">
+        <div class="container">
+            <h2 class="mb-4">Готовы перейти на электронный документооборот?</h2>
+            <p class="lead mb-5">Начните прямо сейчас и получите 14 дней бесплатного использования</p>
+            <a href="#" class="btn btn-primary btn-lg px-5">Начать бесплатно</a>
+        </div>
+    </section>
+
+    <!-- Подвал -->
+    <footer id="contacts" class="bg-dark text-white py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5><i class="fas fa-file-contract me-2"></i>ЭДО</h5>
+                    <p class="mt-3">Современная система электронного документооборота для бизнеса любого масштаба</p>
+                    <div class="mt-4">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-telegram"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-vk"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5>Продукт</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-white-50">Возможности</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Тарифы</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Интеграции</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Демо-версия</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5>Компания</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-white-50">О нас</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Вакансии</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Партнеры</a></li>
+                        <li class="mb-2"><a href="#" class="text-white-50">Блог</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <h5>Контакты</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-phone-alt me-2"></i> +7 (495) 123-45-67</li>
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> info@edo-system.ru</li>
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Москва, ул. Примерная, 123</li>
+                        <li class="mb-2"><i class="fas fa-clock me-2"></i> Пн-Пт: 9:00 - 18:00</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="small mb-0">© 2023 Электронный документооборот. Все права защищены.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="small mb-0">
+                        <a href="#" class="text-white-50 me-3">Политика конфиденциальности</a>
+                        <a href="#" class="text-white-50">Условия использования</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+{% endblock %}

@@ -1,0 +1,90 @@
+body {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+.settings-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.admin-badge {
+    background-color: #fff3cd;
+    color: #856404;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.card-header {
+    color: #fff;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 15px 20px;
+}
+.badge-dark {
+    background-color: #333;
+}
+.btn-outline-dark {
+    border-color: #000;
+    color: #000;
+}
+.btn-outline-dark:hover {
+    background-color: #000;
+    color: #fff;
+}
+.template-fields {
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+.field-badge {
+    background-color: #333;
+    color: white;
+}
+.action-buttons .btn {
+    margin-left: 5px;
+}
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+.empty-state i {
+    font-size: 50px;
+    margin-bottom: 20px;
+    color: #dee2e6;
+}
+
+.approval-step {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 15px;
+}
+
+.approval-step:before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.approval-step:last-child:before {
+    bottom: calc(100% - 15px);
+}
+
+.approval-step-dot {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #adb5bd;
+    z-index: 1;
+}
