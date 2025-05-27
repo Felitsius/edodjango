@@ -4,7 +4,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from .models import ProcessType, Organizations, Profiles, Positions, ProcessType_Order, DocumentTemplate, TemplateField, DocumentHistory
+from .models import ProcessType, Organizations, Profiles, Positions, ProcessType_Order, DocumentTemplate, TemplateField, DocumentHistory, Document
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.timezone import localtime
@@ -37,7 +37,11 @@ def documents_view(request):
     indocuments = Document.objects.filter(order=ProcessType_Order.objects.get(position=Positions.objects.get(name=user.position.name)))
     indocument_list = []
 
-    documentHistory_list = []
+    outdocuments = Document.objects.filter(author=user)
+    outdocument_list = []
+
+    indocumentHistory_list = []
+    outdocumentHistory_list = []
 
     for value in position:
         positions_list.append(value.name)  
@@ -56,6 +60,17 @@ def documents_view(request):
     for value in indocuments:
         documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
 
+        for history in documentHistory:
+            if history.document.id == value.id:
+                documentHistory_data = {
+                    'document_id': history.document.id,
+                    'user': history.user.position.name,
+                    'action': history.action,
+                    'description': history.description,
+                    'created_at': localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
+                }
+                indocumentHistory_list.append(documentHistory_data)  
+
         indocument_data = {
             'id': value.id,
             'name': value.workflow.template.name,
@@ -65,10 +80,27 @@ def documents_view(request):
             'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
             'status': value.get_status_display(),
             'comment': value.comment,
-            'order': value.order.position.name,
-            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name='Заявление на отпуск'))]
+            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))]
         }
         indocument_list.append(indocument_data)
+   
+
+
+    for value in outdocuments:
+        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
+
+        outdocument_data = {
+            'id': value.id,
+            'name': value.workflow.template.name,
+            'author': value.author.position.name,
+            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
+            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
+            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
+            'status': value.get_status_display(),
+            'comment': value.comment,
+            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))]
+        }
+        outdocument_list.append(outdocument_data)
 
         for history in documentHistory:
             documentHistory_data = {
@@ -78,7 +110,7 @@ def documents_view(request):
                 'description': history.description,
                 'created_at': localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
             }
-            documentHistory_list.append(documentHistory_data)  
+            outdocumentHistory_list.append(documentHistory_data)  
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -102,19 +134,24 @@ def documents_view(request):
             approved_id = request.POST.get('approved_id')
             comment = request.POST.get('comment')
             document = Document.objects.get(id=approved_id)
-            #order = len(ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name="Заявление на отпуск")))
 
-            print(approved_id)
-            print(comment)
-            #print(order)
             DocumentHistory.objects.create(document=document, user=user, action="Согласованно", description=comment)
             update_process_document(document)
+        elif action == 'reject_document':
+            approved_id = request.POST.get('approved_id')
+            comment = request.POST.get('comment')
+            document = Document.objects.get(id=approved_id)
+
+            DocumentHistory.objects.create(document=document, user=user, action="Отказ", description=comment)
+            Document.objects.filter(id=approved_id).update(order=None,status='rejected')
 
         return redirect('/documents')
 
     templates_json = json.dumps(templates_list)
     indocument_json = json.dumps(indocument_list, cls=DjangoJSONEncoder)
-    documentHistory_json = json.dumps(documentHistory_list, cls=DjangoJSONEncoder)
+    outdocument_json = json.dumps(outdocument_list, cls=DjangoJSONEncoder)
+    indocumentHistory_json = json.dumps(indocumentHistory_list, cls=DjangoJSONEncoder)
+    outdocumentHistory_json = json.dumps(outdocumentHistory_list, cls=DjangoJSONEncoder)
     
     return render(request, 'work/documents.html', {
         'templates': templates_list,
@@ -122,7 +159,10 @@ def documents_view(request):
         'positions_list': positions_list,
         'indocument_list': indocument_list,
         'indocument_json': indocument_json,
-        'documentHistory_json': documentHistory_json
+        'outdocument_list': outdocument_list,
+        'outdocument_json': outdocument_json,
+        'indocumentHistory_json': indocumentHistory_json,
+        'outdocumentHistory_json': outdocumentHistory_json
     })
 
 def login_view(request):
