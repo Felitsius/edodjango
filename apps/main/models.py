@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.conf import settings
 import os
 
 class Organizations(models.Model):
@@ -105,15 +109,65 @@ class ProcessType_Order(models.Model):
 
 class Profiles(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name='Пользователь')
+    last_name = models.CharField('Фамилия', max_length=50)
+    first_name = models.CharField('Имя', max_length=50)
+    middle_name = models.CharField('Отчество', max_length=50, blank=True, null=True)
+
+    # Поле для номера телефона с валидацией
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{9,15}$',
+        message="Номер телефона должен быть в формате: '+79999999999'. Допускается до 15 цифр."
+    )
+    phone_number = models.CharField(
+        'Номер телефона',
+        validators=[phone_regex],
+        max_length=17,
+        blank=True,
+        null=True
+    )
+    
+    # Поле для электронной почты
+    email = models.EmailField('Email', blank=True, null=True)
+    
+    # Поле для Telegram (может быть как username, так и номер)
+    telegram = models.CharField(
+        'Telegram',
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Можно указать @username или номер телефона"
+    )
+
     organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация')
     position = models.ForeignKey(Positions, on_delete=models.CASCADE, verbose_name='Должность')
+    approve = models.BooleanField(default=False, verbose_name="Подтверждён")
 
     @property
+    def full_name(self):
+        return f"{self.last_name} {self.first_name} {self.middle_name or ''}".strip()
+    
     def personal_files(self):
         return self.user.document_set.all()
 
     def __str__(self):
         return f'{self.user.username} - {self.position}'
+    
+    def get_profile_directory(self):
+        """Возвращает путь к директории профиля"""
+        org_name = self.organization.name  # предполагается, что у Organizations есть поле name
+        full_name = self.full_name
+        return os.path.join(
+            settings.MEDIA_ROOT,  # или другой корневой каталог
+            org_name,
+            full_name,
+            'Документы'
+        )
+
+    def create_profile_directories(self):
+        """Создает необходимые директории для профиля"""
+        profile_dir = self.get_profile_directory()
+        os.makedirs(profile_dir, exist_ok=True)
+        return profile_dir
 
 class Document(models.Model):
     STATUS_DRAFT = 'draft'
