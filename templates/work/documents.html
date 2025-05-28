@@ -11,8 +11,8 @@
     const inhistory_data = JSON.parse('{{ indocumentHistory_json|safe }}');
     const outhistory_data = JSON.parse('{{ outdocumentHistory_json|safe }}');
 
-    console.log(outdocument_data)
-    console.log(outhistory_data)
+    console.log(indocument_data)
+
     // Скрипт для отображения полей
     function createFields(template_name) {
         let html = '';
@@ -34,7 +34,7 @@
     }
 
     // Модальное окно для согласования документа
-    function approveDocument(document_id, name) {
+    function approveDocument(document_id) {
         const container = document.getElementById('approveDocument');
         let html = `
             <div class="modal fade" id="approveDocumentModal-${document_id}" tabindex="-1">
@@ -48,7 +48,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="alert alert-success">
-                                <i class="fas fa-info-circle me-2"></i>Вы собираетесь согласовать документ: <strong>${name} №${document_id}</strong>
+                                <i class="fas fa-info-circle me-2"></i>Вы собираетесь согласовать документ
                             </div>
                             
                             <form method="POST">
@@ -83,7 +83,7 @@
     };
 
     // Модальное окно для отклонение документа
-    function rejectDocument(document_id, name) {
+    function rejectDocument(document_id) {
         const container = document.getElementById('rejectDocument');
         let html = `
             <div class="modal fade" id="rejectDocumentModal-${document_id}" tabindex="-1">
@@ -97,7 +97,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="alert alert-danger">
-                                <i class="fas fa-info-circle me-2"></i>Вы собираетесь отклонить документ: <strong>${name} №${document_id}</strong>
+                                <i class="fas fa-info-circle me-2"></i>Вы собираетесь отклонить документ
                             </div>
                             
                             <form method="POST">
@@ -146,10 +146,10 @@
             history_data = inhistory_data;
             but = `
                 <div class="d-grid gap-2">
-                    <button class="btn btn-dark" onclick="approveDocument(${document_id}, '${document_data[index]['name']}')">
+                    <button class="btn btn-dark" onclick="approveDocument(${document_id})">
                         <i class="fas fa-check me-1"></i>Согласовать
                     </button>
-                    <button class="btn btn-outline-dark" onclick="rejectDocument(${document_id}, '${document_data[index]['name']}')">
+                    <button class="btn btn-outline-dark" onclick="rejectDocument(${document_id})">
                         <i class="fas fa-times me-1"></i>Отклонить
                     </button>
                 </div>
@@ -167,9 +167,6 @@
                     num++;
                     // history_data
                     if (history_data[workflow_index] !== undefined) {
-                        console.log(history_data[workflow_index]['action'] + ' == ' + 'Согласованно')
-                        console.log(history_data[workflow_index]['document_id'] + ' == ' + document_id)
-                        console.log(index)
                         if (history_data[workflow_index]['action'] == 'Согласованно' && history_data[workflow_index]['document_id'] == document_id && history_data[workflow_index]['user'] == position) {
                             workflow += `
                                 <div class="approval-step completed">

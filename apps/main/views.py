@@ -33,16 +33,7 @@ def documents_view(request):
 
     position = Positions.objects.filter(organization=organization)
     positions_list = []
-    
-    indocuments = Document.objects.filter(order=ProcessType_Order.objects.get(position=Positions.objects.get(name=user.position.name)))
-    indocument_list = []
-
-    outdocuments = Document.objects.filter(author=user)
-    outdocument_list = []
-
-    indocumentHistory_list = []
-    outdocumentHistory_list = []
-
+   
     for value in position:
         positions_list.append(value.name)  
 
@@ -57,33 +48,65 @@ def documents_view(request):
         }
         templates_list.append(template_data)  
 
+    outdocuments = Document.objects.filter(author=user)
+    outdocument_list = []
+
+    indocumentHistory_list = []
+    outdocumentHistory_list = []
+
+    indocuments = Document.objects.filter(order=ProcessType_Order.objects.get(position=Positions.objects.get(name=user.position.name)))
+    indocument_list = []
+    
+
     for value in indocuments:
+        route_approve = []
+        first = True
         documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
 
-        for history in documentHistory:
-            if history.document.id == value.id:
-                documentHistory_data = {
-                    'document_id': history.document.id,
-                    'user': history.user.position.name,
-                    'action': history.action,
-                    'description': history.description,
-                    'created_at': localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
-                }
-                indocumentHistory_list.append(documentHistory_data)  
+        print('DOCUMENT_ID = ', value.id)
+
+        for user_route in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name)):
+            name = user_route.position.name
+            document_id = value.id
+            action = ''
+            description = ''
+            created_at = ''
+            
+            if first:
+                action = 'В работе'
+                first = False
+            else:
+                action = 'В ожидание'
+
+            for history in documentHistory:
+                if history.document.id == document_id and history.user.position.name == name:
+                    action = history.action
+                    description = history.description
+                    created_at = localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
+
+            routeApprove_data = {
+                'user': name,
+                'document_id': document_id,
+                'action': action,
+                'description': description,
+                'created_at': created_at
+            }
+            route_approve.append(routeApprove_data)
 
         indocument_data = {
             'id': value.id,
-            'name': value.workflow.template.name,
+            'name': value.name,
             'author': value.author.position.name,
             'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
             'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
             'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
             'status': value.get_status_display(),
             'comment': value.comment,
-            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))]
+            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))],
+            'history': route_approve
         }
         indocument_list.append(indocument_data)
-   
+
 
 
     for value in outdocuments:

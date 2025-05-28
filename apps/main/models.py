@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.conf import settings
 import os
@@ -14,6 +14,29 @@ class Organizations(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Сначала сохраняем модель, чтобы получить ID (если это новое создание)
+        super().save(*args, **kwargs)
+        
+        # Создаем папку с названием организации
+        folder_name = f"{self.name}"  # Добавляем ID для уникальности
+        folder_path = os.path.join(settings.MEDIA_ROOT, folder_name)
+        
+        # Создаем папку, если она не существует
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            print(f"Создана папка для организации: {folder_path}")
+
+    def delete(self, *args, **kwargs):
+        # Удаляем папку организации
+        folder_name = f"{self.name}"
+        folder_path = os.path.join(settings.MEDIA_ROOT, folder_name)
+        if os.path.exists(folder_path):
+            import shutil
+            shutil.rmtree(folder_path)
+        
+        super().delete(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Организация'
@@ -37,7 +60,7 @@ class Positions(models.Model):
 
 def document_template_upload_to(instance, filename):
     # Создаем путь: 'organizations/<organization_name>/<filename>'
-    return f'{instance.organization.name}/{filename}'
+    return f'{instance.organization.name}/Шаблоны/{filename}'
 
 class DocumentTemplate(models.Model):
     """
@@ -148,26 +171,42 @@ class Profiles(models.Model):
     
     def personal_files(self):
         return self.user.document_set.all()
+    
+    def delete(self, *args, **kwargs):
+        print("DELETE")
+        # Удаляем папку организации
+        folder_name = f"{self.position.name}"
+        folder_path = os.path.join(settings.MEDIA_ROOT, f'{self.organization.name}' ,folder_name)
+        if os.path.exists(folder_path):
+            import shutil
+            shutil.rmtree(folder_path)
+        
+        super().delete(*args, **kwargs)
 
     def __str__(self):
         return f'{self.user.username} - {self.position}'
     
-    def get_profile_directory(self):
-        """Возвращает путь к директории профиля"""
-        org_name = self.organization.name  # предполагается, что у Organizations есть поле name
-        full_name = self.full_name
-        return os.path.join(
-            settings.MEDIA_ROOT,  # или другой корневой каталог
-            org_name,
-            full_name,
-            'Документы'
-        )
 
-    def create_profile_directories(self):
-        """Создает необходимые директории для профиля"""
-        profile_dir = self.get_profile_directory()
-        os.makedirs(profile_dir, exist_ok=True)
-        return profile_dir
+@receiver(pre_save, sender=Profiles)
+def create_folder_on_approve(sender, instance, **kwargs):
+    try:
+        old_instance = sender.objects.get(pk=instance.pk)
+        if not old_instance.approve and instance.approve:
+            # Создаем уникальное имя папки
+            folder_name = f"{instance.position.name}"
+            folder_path = os.path.join(settings.MEDIA_ROOT, f'{instance.organization.name}' ,folder_name)
+            
+            # Создаем папку, если ее нет
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+                instance.folder_path = folder_path
+    except sender.DoesNotExist:
+        # Это новый объект, еще не сохраненный в БД
+        if instance.approve:
+            folder_name = f"{instance.position.name}"
+            folder_path = os.path.join(settings.MEDIA_ROOT, f'{instance.organization.name}' ,folder_name)
+            os.makedirs(folder_path, exist_ok=True)
+            instance.folder_path = folder_path
 
 class Document(models.Model):
     STATUS_DRAFT = 'draft'
