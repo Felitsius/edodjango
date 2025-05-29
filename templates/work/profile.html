@@ -34,7 +34,6 @@
                 <div class="profile-card card">
                     <div class="card-body">
                         <h5 class="card-title fw-bold"><i class="fas fa-info-circle me-2"></i>О пользователе</h5>
-                        <p class="card-text text-muted">Ответственный за ведение документооборота в компании. Работаю с ЭДО более 3 лет.</p>
                         <hr>
                         <ul class="list-unstyled">
                             <li class="mb-2"><i class="fas fa-envelope me-2"></i>{{ user.email }}</li>
@@ -50,12 +49,7 @@
                 <!-- Навигация по профилю -->
                 <ul class="nav nav-pills mb-4" id="profileTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="activity-tab" data-bs-toggle="pill" data-bs-target="#activity" type="button" role="tab">
-                            <i class="fas fa-list-ul me-1"></i>Активность
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab">
+                        <button class="nav-link active" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab">
                             <i class="fas fa-cog me-1"></i>Настройки
                         </button>
                     </li>
@@ -68,84 +62,9 @@
                 
                 <!-- Содержимое вкладок -->
                 <div class="tab-content" id="profileTabsContent">
-                    <!-- Вкладка Активность -->
-                    <div class="tab-pane fade show active" id="activity" role="tabpanel">
-                        <div class="profile-card card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title d-flex justify-content-between align-items-center fw-bold">
-                                    <span><i class="fas fa-chart-line me-2"></i>Статистика</span>
-                                    <small class="text-muted">Последние 30 дней</small>
-                                </h5>
-                                <div class="row text-center">
-                                    <div class="col-md-4 mb-3 mb-md-0">
-                                        <div class="stat-card p-3">
-                                            <h3 class="fw-bold">124</h3>
-                                            <p class="mb-0 text-muted">Документов</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 mb-3 mb-md-0">
-                                        <div class="stat-card p-3">
-                                            <h3 class="fw-bold">87</h3>
-                                            <p class="mb-0 text-muted">Подписано</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="stat-card p-3">
-                                            <h3 class="fw-bold">{{ indocuments }}</h3>
-                                            <p class="mb-0 text-muted">Отправлено</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="profile-card card">
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold"><i class="fas fa-history me-2"></i>Последние действия</h5>
-                                <div class="list-group list-group-flush">
-                                    <div class="list-group-item d-flex">
-                                        <div class="me-3">
-                                            <i class="fas fa-check-circle fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <div class="d-flex justify-content-between">
-                                                <strong>Подписан договор №1245</strong>
-                                                <small class="text-muted">2 часа назад</small>
-                                            </div>
-                                            <small class="text-muted">Контрагент: ООО "Партнер"</small>
-                                        </div>
-                                    </div>
-                                    <div class="list-group-item d-flex">
-                                        <div class="me-3">
-                                            <i class="fas fa-paper-plane fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <div class="d-flex justify-content-between">
-                                                <strong>Отправлен счет №321</strong>
-                                                <small class="text-muted">5 часов назад</small>
-                                            </div>
-                                            <small class="text-muted">Контрагент: ИП Смирнов А.А.</small>
-                                        </div>
-                                    </div>
-                                    <div class="list-group-item d-flex">
-                                        <div class="me-3">
-                                            <i class="fas fa-file-signature fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <div class="d-flex justify-content-between">
-                                                <strong>Создан акт №78</strong>
-                                                <small class="text-muted">Вчера, 15:30</small>
-                                            </div>
-                                            <small class="text-muted">Проект: "Реконструкция офиса"</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
+
                     <!-- Вкладка Настройки -->
-                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                    <div class="tab-pane fade show active" id="settings" role="tabpanel">
                         <div class="profile-card card">
                             <div class="card-body">
                                 <h5 class="card-title fw-bold"><i class="fas fa-cog me-2"></i>Настройки профиля</h5>

@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Tektur:wght@400..900&display=swap');
+
+* {
+    font-family: "Tektur", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings:
+      "wdth" 100;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+.auth-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 40px;
+    background-color: white;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.08);
+    border-radius: 2px;
+}
+.auth-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+.auth-header h2 {
+    font-weight: 300;
+    letter-spacing: 1.5px;
+    margin-bottom: 15px;
+}
+.auth-header p {
+    color: #6c757d;
+    font-size: 14px;
+}
+.form-control {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+    margin-bottom: 25px;
+    background-color: transparent;
+}
+.form-control:focus {
+    box-shadow: none;
+    border-bottom-color: #212529;
+}
+.btn-login {
+    background-color: #212529;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 0;
+    width: 100%;
+    margin-top: 20px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 13px;
+    transition: all 0.3s;
+}
+.btn-login:hover {
+    background-color: #343a40;
+}
+.form-label {
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+.links {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 13px;
+}
+.links a {
+    color: #6c757d;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.links a:hover {
+    color: #212529;
+}
+.divider {
+    position: relative;
+    margin: 25px 0;
+    text-align: center;
+    color: #6c757d;
+    font-size: 13px;
+}
+.divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+    z-index: -1;
+}
+.divider span {
+    background-color: white;
+    padding: 0 15px;
+}

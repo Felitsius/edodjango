@@ -16,16 +16,21 @@ from django.shortcuts import get_object_or_404
 
 @login_required
 def work_view(request):
-    user = request.user
-    return render(request, 'work/work.html', { 'user':user })
+    user = Profiles.objects.get(user=request.user.id)
+    return render(request, 'work/work.html', { 'user': user })
 
 @login_required
 def profile_view(request):
     user = Profiles.objects.get(user=request.user.id)
-    indocuments = len(Document.objects.filter(author=user))
+    send_documents = len(Document.objects.filter(author=user))
+    signed_documents = len(DocumentHistory.objects.filter(user=user))
+    all_documents = send_documents + signed_documents
+
     return render(request, 'work/profile.html', { 
         'user':user,
-        'indocuments': indocuments,
+        'send_documents': send_documents,
+        'signed_documents': signed_documents,
+        'all_documents': all_documents
     })
 
 
@@ -41,7 +46,8 @@ def documents_view(request):
     position = Positions.objects.filter(organization=organization)
     positions_list = []
 
-    indocuments = Document.objects.filter(Q(order=ProcessType_Order.objects.get(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name)))) | Q(recipient=user, status='approving'))
+    indocument_process = ProcessType_Order.objects.filter(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name))) if ProcessType_Order.objects.filter(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name))) else -1
+    indocuments =  Document.objects.filter(Q(order=indocument_process) | Q(recipient=user, status='approving'))
     indocument_list = []
 
     outdocuments = Document.objects.filter(author=user, status='approving')
@@ -269,6 +275,7 @@ def documents_view(request):
     approve_document_json = json.dumps(approve_documents_list, cls=DjangoJSONEncoder)
 
     return render(request, 'work/documents.html', {
+        'user': user,
         'templates': templates_list,
         'templates_json': templates_json,
         'positions_list': positions_list,
@@ -313,6 +320,7 @@ def reg_view(request):
 
 @login_required
 def setting_procces_type_view(request):
+    user = Profiles.objects.get(user=request.user.id)
     users_list = [users.name for users in Positions.objects.all()]
     doctemplate = DocumentTemplate.objects.all()
     doctemplate_list = [list.name for list in DocumentTemplate.objects.all()]
@@ -400,6 +408,7 @@ def setting_procces_type_view(request):
     doctemplate_json = json.dumps(doctemplate_list)
 
     return render(request, 'work/setting_procces_type.html',{
+        'user': user,
         'users_list': users_list,
         'users_json': users_json,
         'process_list': process_list, 
@@ -488,6 +497,7 @@ def setting_templates_view(request):
     templates_json = json.dumps(templates_list, cls=DjangoJSONEncoder)
 
     return render(request, 'work/setting_templates.html', {
+        'user': user,
         'templates': templates_list,
         'templates_json': templates_json,
     })   
