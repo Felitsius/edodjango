@@ -101,35 +101,6 @@ class TemplateField(models.Model):
         verbose_name = "Поле шаблона"
         verbose_name_plural = "Поля шаблонов"
 
-class ProcessType(models.Model):
-    name = models.CharField(max_length=255, verbose_name='Название типа процесса')
-    description = models.TextField(verbose_name='Описание', null=True)
-    template = models.ForeignKey(DocumentTemplate, on_delete=models.CASCADE, related_name='templated', verbose_name="Шаблон")
-    count_position = models.PositiveIntegerField(verbose_name='Количество этапов согласования')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Тип процесса'
-        verbose_name_plural = 'Типы процессов'
-
-class ProcessType_Order(models.Model):
-    process_type = models.ForeignKey(ProcessType, on_delete=models.CASCADE, verbose_name='Тип процесса')
-    position = models.ForeignKey(Positions, on_delete=models.CASCADE, verbose_name='Должность')
-    organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация') 
-    comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
-    order = models.PositiveIntegerField(verbose_name='Порядок согласования')
-
-    def __str__(self):
-        return f'{self.position.name}'
-
-    class Meta:
-        verbose_name = 'Порядок согласования'
-        verbose_name_plural = 'Порядки согласования'
-        ordering = ['order']
-
 class Profiles(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name='Пользователь')
     last_name = models.CharField('Фамилия', max_length=50)
@@ -163,17 +134,26 @@ class Profiles(models.Model):
 
     organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация')
     position = models.ForeignKey(Positions, on_delete=models.CASCADE, verbose_name='Должность')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     approve = models.BooleanField(default=False, verbose_name="Подтверждён")
 
     @property
     def full_name(self):
         return f"{self.last_name} {self.first_name} {self.middle_name or ''}".strip()
     
+    def short_name(self):
+        parts = self.full_name.split()  # Разбиваем строку по пробелам
+        if len(parts) != 3:
+            return self.full_name()  # Если ФИО не состоит из 3 частей, возвращаем как есть
+        
+        last_name = parts[0]
+        initials = f"{parts[1][0]}.{parts[2][0]}."
+        return f"{last_name} {initials}"
+    
     def personal_files(self):
         return self.user.document_set.all()
     
     def delete(self, *args, **kwargs):
-        print("DELETE")
         # Удаляем папку организации
         folder_name = f"{self.position.name}"
         folder_path = os.path.join(settings.MEDIA_ROOT, f'{self.organization.name}' ,folder_name)
@@ -208,6 +188,39 @@ def create_folder_on_approve(sender, instance, **kwargs):
             os.makedirs(folder_path, exist_ok=True)
             instance.folder_path = folder_path
 
+class ProcessType(models.Model):
+    name = models.CharField(max_length=255, verbose_name='Название типа процесса')
+    description = models.TextField(verbose_name='Описание', null=True)
+    template = models.ForeignKey(DocumentTemplate, on_delete=models.CASCADE, related_name='templated', verbose_name="Шаблон")
+    count_position = models.PositiveIntegerField(verbose_name='Количество этапов согласования')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Тип процесса'
+        verbose_name_plural = 'Типы процессов'
+
+class ProcessType_Order(models.Model):
+    process_type = models.ForeignKey(ProcessType, on_delete=models.CASCADE, verbose_name='Тип процесса')
+    profile = models.ForeignKey(Profiles, on_delete=models.CASCADE, verbose_name='Должность')
+    organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация') 
+    comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
+    order = models.PositiveIntegerField(verbose_name='Порядок согласования')
+
+    def __str__(self):
+        return f'{self.profile.position.name}'
+
+    class Meta:
+        verbose_name = 'Порядок согласования'
+        verbose_name_plural = 'Порядки согласования'
+        ordering = ['order']
+
+def document_upload_to(instance, filename):
+    # Создаем путь: 'organizations/<organization_name>/<filename>'
+    return f'{instance.author.organization.name}/{instance.author.position.name}/{filename}'
+
 class Document(models.Model):
     STATUS_DRAFT = 'draft'
     STATUS_IN_WORK = 'in_work'
@@ -234,7 +247,7 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата изменения")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name="Статус документа")
-    file = models.FileField(upload_to='documents/%Y/%m/%d/', blank=True, null=True, verbose_name="Файл документа")
+    file = models.FileField(upload_to=document_upload_to, blank=True, null=True, verbose_name="Файл документа")
 
     class Meta:
         verbose_name = "Документ"

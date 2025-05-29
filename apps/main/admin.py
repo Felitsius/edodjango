@@ -17,7 +17,7 @@ class ProcessTypeAdmin(admin.ModelAdmin):
 
 @admin.register(ProcessType_Order)
 class ProcessType_OrderAdmin(admin.ModelAdmin):
-    list_display = ('organization','process_type', 'position', 'order', 'comment')
+    list_display = ('organization','process_type', 'profile', 'order', 'comment')
     list_editable = ('order',)  # Позволяет редактировать порядок прямо в списке
 
 @admin.register(Document)

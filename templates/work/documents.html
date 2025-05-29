@@ -8,10 +8,7 @@
     const data_template = JSON.parse('{{ templates_json|safe }}');
     const indocument_data = JSON.parse('{{ indocument_json|safe }}');
     const outdocument_data = JSON.parse('{{ outdocument_json|safe }}');
-    const inhistory_data = JSON.parse('{{ indocumentHistory_json|safe }}');
-    const outhistory_data = JSON.parse('{{ outdocumentHistory_json|safe }}');
-
-    console.log(indocument_data)
+    const approve_document_data = JSON.parse('{{ approve_document_json|safe }}');
 
     // Скрипт для отображения полей
     function createFields(template_name) {
@@ -143,7 +140,6 @@
         let but = '';
         if (data == 'in') {
             document_data = indocument_data;
-            history_data = inhistory_data;
             but = `
                 <div class="d-grid gap-2">
                     <button class="btn btn-dark" onclick="approveDocument(${document_id})">
@@ -156,93 +152,75 @@
             `;
         } else if (data == 'out') {
             document_data = outdocument_data;
-            history_data = outhistory_data;
+            but = '';
+        } else if (data == 'approve') {
+            document_data = approve_document_data;
             but = '';
         }
 
         for (const index in document_data) {
             if ( document_data[index]['id'] == document_id) {
-                for (const workflow_index in document_data[index]['workflow_order'] ) {
-                    let position = document_data[index]['workflow_order'][workflow_index];
+                for (const history in document_data[index]['history'] ) {
                     num++;
-                    // history_data
-                    if (history_data[workflow_index] !== undefined) {
-                        if (history_data[workflow_index]['action'] == 'Согласованно' && history_data[workflow_index]['document_id'] == document_id && history_data[workflow_index]['user'] == position) {
-                            workflow += `
-                                <div class="approval-step completed">
-                                    <div class="approval-step-dot"></div>
-                                    <div class="mb-2">
-                                        <strong>${num}. ${history_data[workflow_index]['user']}</strong>
-                                        <small class="text-muted d-block">Петрова А.К.</small>
-                                    </div>
-                                    <div class="alert alert-light p-2 mb-2">
-                                        <small><strong>Статус:</strong> ${history_data[workflow_index]['action']}</small><br>
-                                        <small><strong>Дата:</strong> ${history_data[workflow_index]['created_at']}</small><br>
-                                        <small><strong>Комментарий:</strong>  ${history_data[workflow_index]['description']}</small>
-                                    </div>
+                    if (document_data[index]['history'][history]['action'] == 'Согласовано') {
+                        workflow += `
+                            <div class="approval-step completed">
+                                <div class="approval-step-dot"></div>
+                                <div class="mb-2">
+                                    <strong>${num}. ${document_data[index]['history'][history]['position']}</strong>
+                                    <small class="text-muted d-block">${document_data[index]['history'][history]['name']}</small>
                                 </div>
-                            `;
-                        } else if (history_data[workflow_index]['action'] == 'Отказ' && history_data[workflow_index]['document_id'] == document_id && history_data[workflow_index]['user'] == position) {
+                                <div class="alert alert-light p-2 mb-2">
+                                    <small><strong>Статус:</strong> ${document_data[index]['history'][history]['action']}</small><br>
+                                    <small><strong>Дата:</strong> ${document_data[index]['history'][history]['created_at']}</small><br>
+                                    <small><strong>Комментарий:</strong>  ${document_data[index]['history'][history]['description']}</small>
+                                </div>
+                            </div>
+                        `;
+                    } else if (document_data[index]['history'][history]['action'] == 'Отказано') {
                             workflow += `
                                 <div class="approval-step rejected">
                                     <div class="approval-step-dot"></div>
                                     <div class="mb-2">
-                                        <strong>${num}. ${history_data[workflow_index]['user']}</strong>
-                                        <small class="text-muted d-block">Петрова А.К.</small>
+                                        <strong>${num}. ${document_data[index]['history'][history]['position']}</strong>
+                                        <small class="text-muted d-block">${document_data[index]['history'][history]['name']}</small>
                                     </div>
                                     <div class="alert alert-light p-2 mb-2">
-                                        <small><strong>Статус:</strong> ${history_data[workflow_index]['action']}</small><br>
-                                        <small><strong>Дата:</strong> ${history_data[workflow_index]['created_at']}</small><br>
-                                        <small><strong>Комментарий:</strong>  ${history_data[workflow_index]['description']}</small>
+                                        <small><strong>Статус:</strong> ${document_data[index]['history'][history]['action']}</small><br>
+                                        <small><strong>Дата:</strong> ${document_data[index]['history'][history]['created_at']}</small><br>
+                                        <small><strong>Комментарий:</strong>  ${document_data[index]['history'][history]['description']}</small>
                                     </div>
                                 </div>
                             `;
-                            reject = true;
-                        }
+                    } else if (document_data[index]['history'][history]['action'] == 'В работе') {
+                            workflow += `
+                                <div class="approval-step current">
+                                    <div class="approval-step-dot"></div>
+                                    <div class="mb-2">
+                                        <strong>${num}. ${document_data[index]['history'][history]['position']}</strong>
+                                        <small class="text-muted d-block">${document_data[index]['history'][history]['name']}</small>
+                                    </div>
+                                    <div class="alert alert-light p-2 mb-2">
+                                        <small><strong>Статус:</strong> ${document_data[index]['history'][history]['action']}</small><br>
+                                    </div>
+                                </div>
+                            `;
                     } else {
-                        if (reject == false) {
-                            if (first == false) {
-                                workflow += `
-                                    <div class="approval-step current">
-                                        <div class="approval-step-dot"></div>
-                                        <div class="mb-2">
-                                            <strong>${num}. ${position}</strong>
-                                            <small class="text-muted d-block">Сидоров В.П.</small>
-                                        </div>
-                                        <div class="alert alert-light p-2 mb-2">
-                                            <small><strong>Статус:</strong> В работе</small><br>
-                                        </div>
-                                    </div>
-                                `;
-                                first = true
-                            } else {
-                                workflow += `
-                                    <div class="approval-step">
-                                        <div class="approval-step-dot"></div>
-                                        <div class="mb-2">
-                                            <strong>${num}. ${position}</strong>
-                                            <small class="text-muted d-block">Сидоров В.П.</small>
-                                        </div>
-                                        <div class="alert alert-light p-2 mb-2">
-                                            <small><strong>Статус:</strong> Ожидает</small><br>
-                                        </div>
-                                    </div>
-                                `;
-                            }
-                        } else {
                             workflow += `
                                 <div class="approval-step">
                                     <div class="approval-step-dot"></div>
                                     <div class="mb-2">
-                                        <strong>${num}. ${position}</strong>
-                                        <small class="text-muted d-block">Сидоров В.П.</small>
+                                        <strong>${num}. ${document_data[index]['history'][history]['position']}</strong>
+                                        <small class="text-muted d-block">${document_data[index]['history'][history]['name']}</small>
+                                    </div>
+                                    <div class="alert alert-light p-2 mb-2">
+                                        <small><strong>Статус:</strong> ${document_data[index]['history'][history]['action']}</small><br>
                                     </div>
                                 </div>
                             `;
-                        }
                     }
+                    //console.log(document_data[index]['history'][history]['user'])
                 }
-                    
                 html += `
                     <div class="modal fade" id="viewDocumentModal-${document_id}" tabindex="-1">
                         <div class="modal-dialog modal-xl">
@@ -265,7 +243,7 @@
                                                     <span class="text-muted me-3"><i class="fas fa-file-alt me-1"></i>${document_data[index]['type']}</span>
                                                     <span class="text-muted"><i class="fas fa-hashtag me-1"></i>ID: ${document_data[index]['id']}</span>
                                                 </div>
-                                                <button class="btn btn-outline-dark">
+                                                <button class="btn btn-outline-dark" id="downloadBtn" data-file-id="${document_id}">
                                                     <i class="fas fa-download me-1"></i>Скачать документ
                                                 </button>
                                             </div>
@@ -311,12 +289,20 @@
                         </div>
                     </div>
                 `;
-                };
             };
+        };       
         container.innerHTML = html;
         var myModal = new bootstrap.Modal(document.getElementById(`viewDocumentModal-${document_id}`));
         myModal.show();
-    }
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+        const fileId = this.getAttribute('data-file-id');
+        window.location.href = `/download/${fileId}/`;  // Переход по URL скачивания
+        console.log('assa')
+    });
+
+    };
+
 
     document.getElementById('templateSelect').addEventListener('change', function() {
         const templateFields = document.getElementById('templateFields');
@@ -380,7 +366,7 @@
                                         <th style="width: 100px;"></th>
                                         <th>Документ</th>
                                         <th>Отправитель</th>
-                                        <th>Дата</th>
+                                        <th>Дата создания</th>
                                         <th>Статус</th>
                                         <th style="width: 120px;">Действия</th>
                                     </tr>
@@ -427,8 +413,8 @@
                                     <tr>
                                         <th style="width: 100px;"></th>
                                         <th>Документ</th>
-                                        <th>Получатель</th>
-                                        <th>Дата</th>
+                                        <th>Отправитель</th>
+                                        <th>Дата создания</th>
                                         <th>Статус</th>
                                         <th style="width: 120px;">Действия</th>
                                     </tr>
@@ -475,70 +461,34 @@
                                     <tr>
                                         <th style="width: 100px;"></th>
                                         <th>Документ</th>
-                                        <th>Контрагент</th>
-                                        <th>Дата</th>
+                                        <th>Отправитель</th>
+                                        <th>Дата создания</th>
                                         <th>Статус</th>
                                         <th style="width: 80px;">Действия</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="document-preview">
-                                                <i class="fas fa-file-contract fa-2x"></i>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <strong>Доп.соглашение №1</strong><br>
-                                            <small class="text-muted">Тип: Доп.соглашение</small>
-                                        </td>
-                                        <td>ООО "Партнер"</td>
-                                        <td>05.05.2023</td>
-                                        <td><span class="badge-status badge-approved">Согласован 08.05.2023</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="document-preview">
-                                                <i class="fas fa-file-invoice-dollar fa-2x"></i>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <strong>Акт сверки №5</strong><br>
-                                            <small class="text-muted">Тип: Акт сверки</small>
-                                        </td>
-                                        <td>ООО "Контрагент"</td>
-                                        <td>28.04.2023</td>
-                                        <td><span class="badge-status badge-approved">Согласован 30.04.2023</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="document-preview">
-                                                <i class="fas fa-file-signature fa-2x"></i>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <strong>Договор №201</strong><br>
-                                            <small class="text-muted">Тип: Договор</small>
-                                        </td>
-                                        <td>ИП Иванов И.И.</td>
-                                        <td>20.04.2023</td>
-                                        <td><span class="badge-status badge-rejected">Отклонен 22.04.2023</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-dark" title="Просмотр" data-bs-toggle="modal" data-bs-target="#viewDocumentModal">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    {% for approve_documents in approve_documents_list %}
+                                        <tr>
+                                            <td>
+                                                <div class="document-preview">
+                                                    <i class="fas fa-file-word fa-2x text-primary"></i>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong>{{ approve_documents.name }} №{{ approve_documents.id }}</strong><br>
+                                                <small class="text-muted">{{ approve_documents.type }}</small>
+                                            </td>
+                                            <td>{{ approve_documents.author }}</td>
+                                            <td>{{ approve_documents.created_at }}</td>
+                                            <td><span class="badge-status badge-waiting">{{ approve_documents.status }}</span></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" onclick="showDocument({{ approve_documents.id }}, 'approve')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>

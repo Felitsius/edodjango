@@ -8,8 +8,11 @@ from .models import ProcessType, Organizations, Profiles, Positions, ProcessType
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.timezone import localtime
+from django.db.models import Q
 from .create_template import *
 from .create_document import *
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
 
 @login_required
 def work_view(request):
@@ -18,8 +21,12 @@ def work_view(request):
 
 @login_required
 def profile_view(request):
-    user = request.user
-    return render(request, 'work/profile.html', { 'user':user })
+    user = Profiles.objects.get(user=request.user.id)
+    indocuments = len(Document.objects.filter(author=user))
+    return render(request, 'work/profile.html', { 
+        'user':user,
+        'indocuments': indocuments,
+    })
 
 
 @require_http_methods(["GET", "POST"])
@@ -33,108 +40,16 @@ def documents_view(request):
 
     position = Positions.objects.filter(organization=organization)
     positions_list = []
-   
-    for value in position:
-        positions_list.append(value.name)  
 
-    for value in process_type:
-        template_data = {
-            'id': value.id,
-            'name': value.name,
-            'field': [
-                field.name for field in template_fields 
-                if field.template.name == value.template.name
-            ]
-        }
-        templates_list.append(template_data)  
+    indocuments = Document.objects.filter(Q(order=ProcessType_Order.objects.get(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name)))) | Q(recipient=user, status='approving'))
+    indocument_list = []
 
-    outdocuments = Document.objects.filter(author=user)
+    outdocuments = Document.objects.filter(author=user, status='approving')
     outdocument_list = []
 
-    indocumentHistory_list = []
-    outdocumentHistory_list = []
-
-    indocuments = Document.objects.filter(order=ProcessType_Order.objects.get(position=Positions.objects.get(name=user.position.name)))
-    indocument_list = []
-    
-
-    for value in indocuments:
-        route_approve = []
-        first = True
-        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
-
-        print('DOCUMENT_ID = ', value.id)
-
-        for user_route in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name)):
-            name = user_route.position.name
-            document_id = value.id
-            action = ''
-            description = ''
-            created_at = ''
-            
-            if first:
-                action = 'В работе'
-                first = False
-            else:
-                action = 'В ожидание'
-
-            for history in documentHistory:
-                if history.document.id == document_id and history.user.position.name == name:
-                    action = history.action
-                    description = history.description
-                    created_at = localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
-
-            routeApprove_data = {
-                'user': name,
-                'document_id': document_id,
-                'action': action,
-                'description': description,
-                'created_at': created_at
-            }
-            route_approve.append(routeApprove_data)
-
-        indocument_data = {
-            'id': value.id,
-            'name': value.name,
-            'author': value.author.position.name,
-            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
-            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
-            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
-            'status': value.get_status_display(),
-            'comment': value.comment,
-            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))],
-            'history': route_approve
-        }
-        indocument_list.append(indocument_data)
-
-
-
-    for value in outdocuments:
-        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
-
-        outdocument_data = {
-            'id': value.id,
-            'name': value.workflow.template.name,
-            'author': value.author.position.name,
-            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
-            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
-            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
-            'status': value.get_status_display(),
-            'comment': value.comment,
-            'workflow_order': [value.position.name for value in ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name))]
-        }
-        outdocument_list.append(outdocument_data)
-
-        for history in documentHistory:
-            documentHistory_data = {
-                'document_id': value.id,
-                'user': history.user.position.name,
-                'action': history.action,
-                'description': history.description,
-                'created_at': localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
-            }
-            outdocumentHistory_list.append(documentHistory_data)  
-
+    approve_documents = Document.objects.filter(author=user, status__in=['approved', 'rejected'])
+    approve_documents_list = []
+   
     if request.method == 'POST':
         action = request.POST.get('action')
 
@@ -158,24 +73,201 @@ def documents_view(request):
             comment = request.POST.get('comment')
             document = Document.objects.get(id=approved_id)
 
-            DocumentHistory.objects.create(document=document, user=user, action="Согласованно", description=comment)
-            update_process_document(document)
+            DocumentHistory.objects.create(document=document, user=user, action="Согласовано", description=comment)
+            if document.workflow:
+                update_process_document(document)
+            elif document.recipient:
+                Document.objects.filter(id=document.id).update(order=None, status='approved')
         elif action == 'reject_document':
             approved_id = request.POST.get('approved_id')
             comment = request.POST.get('comment')
             document = Document.objects.get(id=approved_id)
 
-            DocumentHistory.objects.create(document=document, user=user, action="Отказ", description=comment)
+            DocumentHistory.objects.create(document=document, user=user, action="Отказано", description=comment)
             Document.objects.filter(id=approved_id).update(order=None,status='rejected')
 
         return redirect('/documents')
 
+
+    for value in position:
+        positions_list.append(value.name)  
+
+    for value in process_type:
+        template_data = {
+            'id': value.id,
+            'name': value.name,
+            'field': [
+                field.name for field in template_fields 
+                if field.template.name == value.template.name
+            ]
+        }
+        templates_list.append(template_data)  
+
+
+
+    for value in indocuments:
+        route_approve = []
+        first = True
+        reject = False
+        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
+        data = ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name)) if value.workflow else range(1)
+
+        for user_route in data:
+            name = user_route.profile.position.name if value.workflow else value.recipient.position.name
+            document_id = value.id
+            action = ''
+            description = ''
+            created_at = ''
+            
+            if first and reject == False:
+                action = 'В работе'
+                first = False
+            else:
+                action = 'В ожидание'
+
+            for history in documentHistory:
+                if history.document.id == document_id and history.user.position.name == name:
+                    action = history.action
+                    description = history.description
+                    created_at = localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
+                    first = True
+                    if history.action == 'Отказано':
+                        reject = True
+
+            routeApprove_data = {
+                'position': name,
+                'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
+                'document_id': document_id,
+                'action': action,
+                'description': description,
+                'created_at': created_at
+            }
+            route_approve.append(routeApprove_data)
+
+        indocument_data = {
+            'id': value.id,
+            'name': value.name,
+            'author': value.author.position.name,
+            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
+            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
+            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
+            'status': value.get_status_display(),
+            'comment': value.comment,
+            'history': route_approve
+        }
+        indocument_list.append(indocument_data)
+    
+    for value in outdocuments:
+        route_approve = []
+        first = True
+        reject = False
+        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
+        data = ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name)) if value.workflow else range(1)
+
+        for user_route in data:
+            name = user_route.profile.position.name if value.workflow else value.recipient.position.name
+            document_id = value.id
+            action = ''
+            description = ''
+            created_at = ''
+            
+            if first and reject == False:
+                action = 'В работе'
+                first = False
+            else:
+                action = 'В ожидание'
+
+            for history in documentHistory:
+                if history.document.id == document_id and history.user.position.name == name:
+                    action = history.action
+                    description = history.description
+                    created_at = localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
+                    first = True
+                    if history.action == 'Отказано':
+                        reject = True
+
+            routeApprove_data = {
+                'position': name,
+                'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
+                'document_id': document_id,
+                'action': action,
+                'description': description,
+                'created_at': created_at
+            }
+            route_approve.append(routeApprove_data)
+
+
+        outdocument_data = {
+            'id': value.id,
+            'name': value.name,
+            'author': value.author.position.name,
+            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
+            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
+            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
+            'status': value.get_status_display(),
+            'comment': value.comment,
+            'history': route_approve
+        }
+        outdocument_list.append(outdocument_data)
+
+
+    for value in approve_documents:
+        route_approve = []
+        first = True
+        reject = False
+        documentHistory = DocumentHistory.objects.filter(document=value).order_by('created_at')
+        data = ProcessType_Order.objects.filter(process_type=ProcessType.objects.get(name=value.workflow.name)) if value.workflow else range(1)
+
+        for user_route in data:
+            name = user_route.profile.position.name if value.workflow else value.recipient.position.name
+            document_id = value.id
+            action = ''
+            description = ''
+            created_at = ''
+            
+            if first and reject == False:
+                action = 'В работе'
+                first = False
+            else:
+                action = 'В ожидание'
+
+            for history in documentHistory:
+                if history.document.id == document_id and history.user.position.name == name:
+                    action = history.action
+                    description = history.description
+                    created_at = localtime(history.created_at).strftime('%d.%m.%Y %H:%M')
+                    first = True
+                    if history.action == 'Отказано':
+                        reject = True
+
+            routeApprove_data = {
+                'position': name,
+                'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
+                'document_id': document_id,
+                'action': action,
+                'description': description,
+                'created_at': created_at
+            }
+            route_approve.append(routeApprove_data)
+
+        approve_document_data = {
+            'id': value.id,
+            'name': value.name,
+            'author': value.author.position.name,
+            'type': f'Шаблон: {value.workflow.template.name}' if value.workflow is not None else 'Личный документ',
+            'created_at': localtime(value.created_at).strftime('%d.%m.%Y %H:%M'),
+            'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
+            'status': value.get_status_display(),
+            'comment': value.comment,
+            'history': route_approve
+        }
+        approve_documents_list.append(approve_document_data)
+
     templates_json = json.dumps(templates_list)
     indocument_json = json.dumps(indocument_list, cls=DjangoJSONEncoder)
     outdocument_json = json.dumps(outdocument_list, cls=DjangoJSONEncoder)
-    indocumentHistory_json = json.dumps(indocumentHistory_list, cls=DjangoJSONEncoder)
-    outdocumentHistory_json = json.dumps(outdocumentHistory_list, cls=DjangoJSONEncoder)
-    
+    approve_document_json = json.dumps(approve_documents_list, cls=DjangoJSONEncoder)
+
     return render(request, 'work/documents.html', {
         'templates': templates_list,
         'templates_json': templates_json,
@@ -184,8 +276,8 @@ def documents_view(request):
         'indocument_json': indocument_json,
         'outdocument_list': outdocument_list,
         'outdocument_json': outdocument_json,
-        'indocumentHistory_json': indocumentHistory_json,
-        'outdocumentHistory_json': outdocumentHistory_json
+        'approve_documents_list': approve_documents_list,
+        'approve_document_json': approve_document_json
     })
 
 def login_view(request):
@@ -219,7 +311,7 @@ def reg_view(request):
                 return render(request, 'auth/login.html')
     return render(request, 'auth/reg.html')
 
-
+@login_required
 def setting_procces_type_view(request):
     users_list = [users.name for users in Positions.objects.all()]
     doctemplate = DocumentTemplate.objects.all()
@@ -237,7 +329,7 @@ def setting_procces_type_view(request):
             'template': value.template.name,
             'created_at': value.created_at,
             'users_approve': [
-                users.position.name for users in order_process 
+                users.profile.position.name for users in order_process 
                 if users.process_type == value
             ],
             'users_comment': [
@@ -260,8 +352,8 @@ def setting_procces_type_view(request):
             order = 0
             process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
             for i in range(len(list_user)):
-                position = Positions.objects.get(name=list_user[i])
-                ProcessType_Order.objects.create(process_type=process_type, position=position, organization=organization, comment= comment[i], order=i)
+                profile = Profiles.objects.get(position=Positions.objects.get(name=list_user[i]))
+                ProcessType_Order.objects.create(process_type=process_type, profile=profile, organization=organization, comment= comment[i], order=i)
         elif action == 'delete_process':
             deleteID = request.POST.get('deleteID')
             ProcessType.objects.get(id=deleteID).delete()
@@ -314,9 +406,9 @@ def setting_procces_type_view(request):
         'process_json': process_json,
         'doctemplate_list': doctemplate, 
         'doctemplate_json': doctemplate_json
-     })
+    })
         
-
+@login_required
 def setting_templates_view(request):
     user = Profiles.objects.get(user=request.user.id)
     organization = user.organization
@@ -400,11 +492,21 @@ def setting_templates_view(request):
         'templates_json': templates_json,
     })   
 
+@login_required
 def logout_view(request):
     user_logout(request)
     return redirect('/')
-    
+
 def home(request):
     users = request.user
     return render(request, 'home/home.html', { 'users': users })
 
+@login_required
+def download_file(request, pk):
+    document = get_object_or_404(Document, pk=pk)
+    
+    if document.file:
+        response = FileResponse(document.file.open(), as_attachment=True, filename=document.file.name)
+        return response
+    else:
+        raise Http404("Файл не найден")

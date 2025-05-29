@@ -1,5 +1,6 @@
 from .models import DocumentTemplate, TemplateField, Document, ProcessType_Order
 from docxtpl import DocxTemplate
+import datetime
 
 def update_process_document(document):
     order = ProcessType_Order.objects.filter(process_type=document.workflow)
@@ -17,7 +18,7 @@ def create_document(title, author, organization, comment, file=None, template_na
         template = DocumentTemplate.objects.get(name=template_name)
         template_field = [field.name for field in TemplateField.objects.filter(template=DocumentTemplate.objects.get(name=template_name))]
         path_template = template.file
-        save_path = organization + "/" + author.position.name + "/" + title + ".docx"
+        save_path = organization + "/" + author.position.name + "/" + title + ' ' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".docx"
         order = ProcessType_Order.objects.filter(process_type=workflow)
         doc = DocxTemplate(path_template)
         context = {}
@@ -28,7 +29,7 @@ def create_document(title, author, organization, comment, file=None, template_na
         doc.render(context)
         doc.save("media/" + save_path)
 
-        document = Document.objects.create(name=title, author=author, workflow=workflow, comment=comment, status='approving', order=order[0], file=save_path)
+        Document.objects.create(name=title, author=author, workflow=workflow, comment=comment, status='approving', order=order[0], file=save_path)
     else:
         Document.objects.create(name=title, author=author, recipient=recipient, comment=comment, status='approving', file=file)
 
