@@ -20,11 +20,47 @@ def work_view(request):
     return render(request, 'work/work.html', { 'user': user })
 
 @login_required
+def dashboard_view(request):
+    user = Profiles.objects.get(user=request.user.id)
+    return render(request, 'work/dashboard.html', { 'user': user })
+
+@login_required
 def profile_view(request):
     user = Profiles.objects.get(user=request.user.id)
     send_documents = len(Document.objects.filter(author=user))
     signed_documents = len(DocumentHistory.objects.filter(user=user))
     all_documents = send_documents + signed_documents
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'setting':
+            last_name = request.POST.get('last_name')
+            first_name = request.POST.get('first_name')
+            middle_name = request.POST.get('middle_name')
+            email = request.POST.get('email')
+            phone_number = request.POST.get('phone_number')
+            position = request.POST.get('position')
+
+            user.last_name = last_name
+            user.first_name = first_name
+            user.middle_name = middle_name
+            user.email = email 
+            user.phone_number = phone_number
+            posit = Positions.objects.create(name=position, organization=user.organization)
+            user.position = posit
+            user.save()
+        elif action == 'security':
+            us = User.objects.get(username=request.user)
+            old_password = request.POST.get('old_password')
+
+            if us.check_password(old_password):
+                password = request.POST.get('password')
+                password2 = request.POST.get('password2')
+                if password == password2:
+                    us.set_password(password)
+                    us.save()
+
 
     return render(request, 'work/profile.html', { 
         'user':user,
@@ -302,205 +338,222 @@ def login_view(request):
     return render(request, 'auth/login.html')
 
 def reg_view(request):
+    organizations = Organizations.objects.all()
+
     if request.method == 'POST':
         login = request.POST.get('login')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
+        last_name = request.POST.get('last_name')
+        first_name = request.POST.get('first_name')
+        middle_name = request.POST.get('middle_name')
+        email = request.POST.get('email')
+        phone_number = request.POST.get('phone_number')
+        organization = request.POST.get('organization')
+        position = request.POST.get('position')
 
         if password == password2:
-            User.objects.create_user(username=login, password=password)
-
+            us = User.objects.create_user(username=login, password=password)
+            org = Organizations.objects.get(name=organization)
+            posit = Positions.objects.create(name=position, organization=org)
+            Profiles.objects.create(user=us, last_name=last_name, first_name=first_name, middle_name=middle_name, phone_number=phone_number, email=email, organization=org, position=posit)
             user = authenticate(request, username=login, password=password)
             if user is not None:
                 user_login(request, user)
                 return HttpResponse('')
             else:
                 return render(request, 'auth/login.html')
-    return render(request, 'auth/reg.html')
+    return render(request, 'auth/reg.html', { 'organizations': organizations })
 
 @login_required
 def setting_procces_type_view(request):
     user = Profiles.objects.get(user=request.user.id)
-    users_list = [users.name for users in Positions.objects.all()]
-    doctemplate = DocumentTemplate.objects.all()
-    doctemplate_list = [list.name for list in DocumentTemplate.objects.all()]
-    process = ProcessType.objects.all()
-    order_process = ProcessType_Order.objects.all()
+    if user.user.is_superuser:
+        users_list = [users.name for users in Positions.objects.all()]
+        doctemplate = DocumentTemplate.objects.all()
+        doctemplate_list = [list.name for list in DocumentTemplate.objects.all()]
+        process = ProcessType.objects.all()
+        order_process = ProcessType_Order.objects.all()
 
-    process_list = []
+        process_list = []
 
-    for value in process:
-        process_data = {
-            'id': value.id,
-            'name': value.name,
-            'description': value.description,
-            'template': value.template.name,
-            'created_at': value.created_at,
-            'users_approve': [
-                users.profile.position.name for users in order_process 
-                if users.process_type == value
-            ],
-            'users_comment': [
-                users.comment for users in order_process 
-                if users.process_type == value
-            ]
-        }
-        process_list.append(process_data)  
+        for value in process:
+            process_data = {
+                'id': value.id,
+                'name': value.name,
+                'description': value.description,
+                'template': value.template.name,
+                'created_at': value.created_at,
+                'users_approve': [
+                    users.profile.position.name for users in order_process 
+                    if users.process_type == value
+                ],
+                'users_comment': [
+                    users.comment for users in order_process 
+                    if users.process_type == value
+                ]
+            }
+            process_list.append(process_data)  
 
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        organization = Profiles.objects.get(user=request.user.id).organization
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            organization = Profiles.objects.get(user=request.user.id).organization
 
-        if action == 'create_process':
-            name = request.POST.get('name')
-            description = request.POST.get('description')
-            template = DocumentTemplate.objects.get(name=request.POST.get('template'))
-            list_user = request.POST.getlist('user')
-            comment = request.POST.getlist('comment')
-            order = 0
-            process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
-            for i in range(len(list_user)):
-                profile = Profiles.objects.get(position=Positions.objects.get(name=list_user[i]))
-                ProcessType_Order.objects.create(process_type=process_type, profile=profile, organization=organization, comment= comment[i], order=i)
-        elif action == 'delete_process':
-            deleteID = request.POST.get('deleteID')
-            ProcessType.objects.get(id=deleteID).delete()
-        elif action == 'edit_process':
-            saveID = request.POST.get('saveID')
-            name = request.POST.get('name')
-            description = request.POST.get('description')
-            template = DocumentTemplate.objects.get(name=request.POST.get('template'))
-            list_user = request.POST.getlist('user')
-            comment = request.POST.getlist('comment')
-            order = 0
+            if action == 'create_process':
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                template = DocumentTemplate.objects.get(name=request.POST.get('template'))
+                list_user = request.POST.getlist('user')
+                comment = request.POST.getlist('comment')
+                order = 0
+                process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
+                for i in range(len(list_user)):
+                    profile = Profiles.objects.get(position=Positions.objects.get(name=list_user[i]))
+                    ProcessType_Order.objects.create(process_type=process_type, profile=profile, organization=organization, comment= comment[i], order=i)
+            elif action == 'delete_process':
+                deleteID = request.POST.get('deleteID')
+                ProcessType.objects.get(id=deleteID).delete()
+            elif action == 'edit_process':
+                saveID = request.POST.get('saveID')
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                template = DocumentTemplate.objects.get(name=request.POST.get('template'))
+                list_user = request.POST.getlist('user')
+                comment = request.POST.getlist('comment')
+                order = 0
 
-            ProcessType.objects.get(id=saveID).delete()
-            process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
-            
-            for i in range(len(list_user)):
-                order = i + 1
-                position = Positions.objects.get(name=list_user[i])
-                ProcessType_Order.objects.create(process_type=process_type, position=position, organization=organization, comment= comment[i], order=order)
+                ProcessType.objects.get(id=saveID).delete()
+                process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
+                
+                for i in range(len(list_user)):
+                    order = i + 1
+                    position = Positions.objects.get(name=list_user[i])
+                    ProcessType_Order.objects.create(process_type=process_type, position=position, organization=organization, comment= comment[i], order=order)
 
-        return redirect('/setting_procces_type')
-    
-    if request.method == 'GET':
-        action = request.GET.get('action')
+            return redirect('/setting_procces_type')
         
-        if action == "search":
-            search_process = request.GET.get('search_process')
-            process_list = list(
-                filter(
-                    lambda item: (
-                        search_process.lower() in item["name"].lower() 
-                        or search_process.lower() in item["description"].lower()
-                    ),
-                    process_list
+        if request.method == 'GET':
+            action = request.GET.get('action')
+            
+            if action == "search":
+                search_process = request.GET.get('search_process')
+                process_list = list(
+                    filter(
+                        lambda item: (
+                            search_process.lower() in item["name"].lower() 
+                            or search_process.lower() in item["description"].lower()
+                        ),
+                        process_list
+                    )
                 )
-            )
-        elif action == "filter":
-            filter1 = request.GET.get('filter_name')
-            if filter1 == "last_process":
-                process_list = sorted(process_list, key=lambda x: x['created_at'], reverse=True)
-    
-    process_json = json.dumps(process_list, cls=DjangoJSONEncoder)
-    users_json = json.dumps(users_list)
-    doctemplate_json = json.dumps(doctemplate_list)
+            elif action == "filter":
+                filter1 = request.GET.get('filter_name')
+                if filter1 == "last_process":
+                    process_list = sorted(process_list, key=lambda x: x['created_at'], reverse=True)
+        
+        process_json = json.dumps(process_list, cls=DjangoJSONEncoder)
+        users_json = json.dumps(users_list)
+        doctemplate_json = json.dumps(doctemplate_list)
 
-    return render(request, 'work/setting_procces_type.html',{
-        'user': user,
-        'users_list': users_list,
-        'users_json': users_json,
-        'process_list': process_list, 
-        'process_json': process_json,
-        'doctemplate_list': doctemplate, 
-        'doctemplate_json': doctemplate_json
-    })
+        return render(request, 'work/setting_procces_type.html',{
+            'user': user,
+            'users_list': users_list,
+            'users_json': users_json,
+            'process_list': process_list, 
+            'process_json': process_json,
+            'doctemplate_list': doctemplate, 
+            'doctemplate_json': doctemplate_json
+        })
+    else:
+        return HttpResponse('')
         
 @login_required
 def setting_templates_view(request):
     user = Profiles.objects.get(user=request.user.id)
-    organization = user.organization
-    doctemplate_list = DocumentTemplate.objects.all()
-    docfield_list = TemplateField.objects.all()
-    templates_list = []
+    if user.user.is_superuser:
+        organization = user.organization
+        doctemplate_list = DocumentTemplate.objects.all()
+        docfield_list = TemplateField.objects.all()
+        templates_list = []
 
-    for value in doctemplate_list:
-        template_data = {
-            'id': value.id,
-            'name': value.name,
-            'description': value.description,
-            'file': str(value.file),
-            'created_at': value.created_at,
-            'field': [
-                field.name for field in docfield_list 
-                if field.template.name == value.name
-            ]
-        }
-        templates_list.append(template_data)  
+        for value in doctemplate_list:
+            template_data = {
+                'id': value.id,
+                'name': value.name,
+                'description': value.description,
+                'file': str(value.file),
+                'created_at': value.created_at,
+                'field': [
+                    field.name for field in docfield_list 
+                    if field.template.name == value.name
+                ]
+            }
+            templates_list.append(template_data)  
 
-    if request.method == 'POST':
-        action = request.POST.get('action')
+        if request.method == 'POST':
+            action = request.POST.get('action')
 
 
-        if action == 'create_template':
-            name = request.POST.get('name')
-            description = request.POST.get('description')
-            template_file = request.FILES.get('template_file')
+            if action == 'create_template':
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                template_file = request.FILES.get('template_file')
 
-            create_template(name=name, description=description, organization=organization, template_file=template_file)
-        elif action == 'delete_template':
-            deleteID = request.POST.get('deleteID')
-            DocumentTemplate.objects.get(id=deleteID).delete()
-        elif action == 'edit_template':
-            saveID = request.POST.get('saveID')
-            name = request.POST.get('name')
-            description = request.POST.get('description')
-            template_file = request.FILES.get('template_file')
-            fields = request.POST.getlist('field')
-            old_template = DocumentTemplate.objects.get(id=saveID)
+                create_template(name=name, description=description, organization=organization, template_file=template_file)
+            elif action == 'delete_template':
+                deleteID = request.POST.get('deleteID')
+                DocumentTemplate.objects.get(id=deleteID).delete()
+            elif action == 'edit_template':
+                saveID = request.POST.get('saveID')
+                name = request.POST.get('name')
+                description = request.POST.get('description')
+                template_file = request.FILES.get('template_file')
+                fields = request.POST.getlist('field')
+                old_template = DocumentTemplate.objects.get(id=saveID)
+                
+                if template_file is None:
+                    load_file = old_template.file
+                else:
+                    load_file = template_file
             
-            if template_file is None:
-                load_file = old_template.file
-            else:
-                load_file = template_file
+                old_template.delete()
+                
+                doctemplate = DocumentTemplate.objects.create(name=name, description=description, organization=organization,file=load_file)
+
+                for field in fields:
+                    TemplateField.objects.create(template=doctemplate, name=field)
+
+            return redirect('/setting_templates')
         
-            old_template.delete()
+        if request.method == 'GET':
+            action = request.GET.get('action')
             
-            doctemplate = DocumentTemplate.objects.create(name=name, description=description, organization=organization,file=load_file)
-
-            for field in fields:
-                TemplateField.objects.create(template=doctemplate, name=field)
-
-        return redirect('/setting_templates')
-    
-    if request.method == 'GET':
-        action = request.GET.get('action')
-        
-        if action == "search":
-            search_template = request.GET.get('search_template')
-            templates_list = list(
-                filter(
-                    lambda item: (
-                        search_template.lower() in item["name"].lower() 
-                        or search_template.lower() in item["description"].lower()
-                    ),
-                    templates_list
+            if action == "search":
+                search_template = request.GET.get('search_template')
+                templates_list = list(
+                    filter(
+                        lambda item: (
+                            search_template.lower() in item["name"].lower() 
+                            or search_template.lower() in item["description"].lower()
+                        ),
+                        templates_list
+                    )
                 )
-            )
-        elif action == "filter":
-            filter1 = request.GET.get('filter_name')
-            if filter1 == "last_templates":
-                templates_list = sorted(templates_list, key=lambda x: x['created_at'], reverse=True)
+            elif action == "filter":
+                filter1 = request.GET.get('filter_name')
+                if filter1 == "last_templates":
+                    templates_list = sorted(templates_list, key=lambda x: x['created_at'], reverse=True)
 
-        
-    templates_json = json.dumps(templates_list, cls=DjangoJSONEncoder)
+            
+        templates_json = json.dumps(templates_list, cls=DjangoJSONEncoder)
 
-    return render(request, 'work/setting_templates.html', {
-        'user': user,
-        'templates': templates_list,
-        'templates_json': templates_json,
-    })   
+        return render(request, 'work/setting_templates.html', {
+            'user': user,
+            'templates': templates_list,
+            'templates_json': templates_json,
+        })   
+    else:
+        return HttpResponse('')
 
 @login_required
 def logout_view(request):
@@ -510,6 +563,28 @@ def logout_view(request):
 def home(request):
     users = request.user
     return render(request, 'home/home.html', { 'users': users })
+
+def setting_users(request):
+    user = Profiles.objects.get(user=request.user.id)
+    profiles = Profiles.objects.all()
+
+
+    if request.method == "POST":
+        accept = request.POST.get('accept')
+        reject = request.POST.get('reject')
+
+        if accept:
+            obj = Profiles.objects.get(id=accept)
+            obj.approve = True
+            obj.save()
+        elif reject:
+            obj = Profiles.objects.get(id=reject)
+            obj.approve = False
+            obj.save()
+        
+        return redirect('/setting_users')
+
+    return render(request, 'work/setting_users.html', { 'user': user, 'profiles': profiles })
 
 @login_required
 def download_file(request, pk):

@@ -268,7 +268,7 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="action" value="delete_process">
                                         <button class="btn btn-sm btn-outline-danger" name="deleteID" value="{{ process.id }}">
-                                            <i class="fa-solid fa-trash"></i>
+                                            <i class="fa-solid fa-trash" style="width: 15px; text-align: center;"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -278,21 +278,6 @@
                 </div>
             {% endfor %}
         </div>
-
-        <!-- Пагинация -->
-        <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                    <a class="page-link text-dark" href="#" tabindex="-1">Назад</a>
-                </li>
-                <li class="page-item active"><a class="page-link bg-dark border-dark" href="#">1</a></li>
-                <li class="page-item"><a class="page-link text-dark" href="#">2</a></li>
-                <li class="page-item"><a class="page-link text-dark" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link text-dark" href="#">Вперед</a>
-                </li>
-            </ul>
-        </nav>
     </div>
 
     <!-- Модальное окно создания процесса -->

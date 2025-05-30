@@ -388,10 +388,10 @@
                                             <td><span class="badge-status badge-waiting">{{ indocument.status }}</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" onclick="showDocument({{ indocument.id }}, 'in')">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="fas fa-eye" style="width: 15px; text-align: center;"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" title="Согласовать" onclick="approveDocument({{ indocument.id }}, '{{ indocument.name }}')">
-                                                    <i class="fas fa-check"></i>
+                                                    <i class="fas fa-check" style="width: 15px; text-align: center;"></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -436,10 +436,10 @@
                                             <td><span class="badge-status badge-waiting">{{ outdocument.status }}</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" onclick="showDocument({{ outdocument.id }}, 'out')">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="fas fa-eye" style="width: 15px; text-align: center;"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-dark" title="Отменить">
-                                                    <i class="fas fa-times"></i>
+                                                    <i class="fas fa-times" style="width: 15px; text-align: center;"></i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -484,7 +484,7 @@
                                             <td><span class="badge-status badge-waiting">{{ approve_documents.status }}</span></td>
                                             <td>
                                                 <button class="btn btn-sm btn-outline-dark me-1" title="Просмотр" onclick="showDocument({{ approve_documents.id }}, 'approve')">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="fas fa-eye" style="width: 15px; text-align: center;"></i>
                                                 </button>
                                             </td>
                                         </tr>

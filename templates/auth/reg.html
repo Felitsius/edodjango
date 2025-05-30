@@ -20,7 +20,8 @@
                 <p>Пожалуйста, заполните все поля формы</p>
             </div>
 
-            <form>
+            <form method="POST">
+                {% csrf_token %}
                 <div class="row">
                     <div class="mb-3">
                         <label for="username" class="form-label">Логин</label>
@@ -66,10 +67,9 @@
                     <label for="organization" class="form-label">Организация</label>
                     <select class="form-select" id="organization"  name="organization" required>
                         <option value="" selected disabled>Выберите организацию</option>
-                        <option value="org1">Организация 1</option>
-                        <option value="org2">Организация 2</option>
-                        <option value="org3">Организация 3</option>
-                        <option value="other">Другая</option>
+                        {% for org in organizations %}
+                            <option>{{ org.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 

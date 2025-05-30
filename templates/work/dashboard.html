@@ -1,0 +1,125 @@
+{% extends "work/work.html" %}
+{% load static %}
+{% block title %}Рабочая среда{% endblock %}
+{% block style %}<link href="{% static 'css/dashboard.css' %}" rel="stylesheet">{% endblock %}
+{% block content %}
+    <div class="container mb-5">
+        <!-- Заголовок и фильтры -->
+        <div class="row mb-4 mt-3">
+            <div class="col-md-6">
+                <h1 class="fw-bold">Статистика документооборота</h1>
+                <p class="text-muted">Обзор активности и ключевых показателей</p>
+            </div>
+        </div>
+
+        <!-- Основные метрики -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="stat-card p-4 text-center">
+                    <div class="stat-value">142</div>
+                    <div class="stat-label">Всего документов</div>
+                    <div class="mt-2 text-success">↑ 12%</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card p-4 text-center">
+                    <div class="stat-value">87</div>
+                    <div class="stat-label">Подписано</div>
+                    <div class="mt-2 text-success">↑ 8%</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card p-4 text-center">
+                    <div class="stat-value">23</div>
+                    <div class="stat-label">На подписании</div>
+                    <div class="mt-2 text-warning">→ 0%</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card p-4 text-center">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Отклонено</div>
+                    <div class="mt-2 text-danger">↓ 3%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Последние действия и документы -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="chart-container h-100">
+                    <h5 class="fw-bold mb-4">Последние действия</h5>
+                    <div class="activity-item">
+                        <div class="fw-bold mb-1">Подписание договора №1245</div>
+                        <p class="mb-1">Документ подписан всеми сторонами и завершен</p>
+                        <div class="activity-time">10 минут назад</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="fw-bold mb-1">Отправлен счет №7842</div>
+                        <p class="mb-1">Счет отправлен контрагенту ООО "ТехноПром"</p>
+                        <div class="activity-time">1 час назад</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="fw-bold mb-1">Новый документ на подписание</div>
+                        <p class="mb-1">Акт выполненных работ №421 поступил на подписание</p>
+                        <div class="activity-time">3 часа назад</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="fw-bold mb-1">Отклонен договор №1243</div>
+                        <p class="mb-1">Иванова С.П. отклонила документ с комментарием</p>
+                        <div class="activity-time">Вчера, 18:45</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="chart-container h-100">
+                    <h5 class="fw-bold mb-4">Последние документы</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>Тип</th>
+                                    <th>Статус</th>
+                                    <th>Дата</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1245</td>
+                                    <td>Договор</td>
+                                    <td><span class="badge bg-dark text-white">Подписан</span></td>
+                                    <td>15.05.2023</td>
+                                </tr>
+                                <tr>
+                                    <td>1244</td>
+                                    <td>Акт</td>
+                                    <td><span class="badge bg-light text-dark border">На подписании</span></td>
+                                    <td>15.05.2023</td>
+                                </tr>
+                                <tr>
+                                    <td>1243</td>
+                                    <td>Договор</td>
+                                    <td><span class="badge bg-danger">Отклонен</span></td>
+                                    <td>14.05.2023</td>
+                                </tr>
+                                <tr>
+                                    <td>1242</td>
+                                    <td>Счет</td>
+                                    <td><span class="badge bg-success">Оплачен</span></td>
+                                    <td>14.05.2023</td>
+                                </tr>
+                                <tr>
+                                    <td>1241</td>
+                                    <td>Доп.соглашение</td>
+                                    <td><span class="badge bg-dark text-white">Подписан</span></td>
+                                    <td>13.05.2023</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

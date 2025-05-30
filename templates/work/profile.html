@@ -14,12 +14,13 @@
                     <h2 class="mb-1 fw-bold">{{ user.full_name }}</h2>
                     <p class="mb-2 text-muted"><i class="fas fa-briefcase me-2"></i>{{ user.position.name }}</p>
                     <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2">
-                        <span class="badge bg-dark"><i class="fas fa-circle me-1 small"></i>Online</span>
-                        <span class="badge badge-light"><i class="fas fa-building me-1"></i>{{ user.organization.name }}</span>
+                        {% if user.approve %}
+                            <span class="badge bg-dark"><i class="fas fa-circle me-1 small"></i>Подтвержденный</span>
+                        {% else %}
+                            <span class="badge badge-light"><i class="fas fa-circle me-1"></i>Не подтвержденный</span>    
+                        {% endif %}
+                        <span class="badge badge-light"><i class="fas fa-building me-1"></i>{{ user.organization.name }}</span>    
                     </div>
-                </div>
-                <div class="col-md-2 text-center text-md-end mt-3 mt-md-0">
-                    <button class="btn btn-outline-dark"><i class="fas fa-pen me-1"></i>Редактировать</button>
                 </div>
             </div>
         </div>
@@ -68,26 +69,32 @@
                         <div class="profile-card card">
                             <div class="card-body">
                                 <h5 class="card-title fw-bold"><i class="fas fa-cog me-2"></i>Настройки профиля</h5>
-                                <form>
-                                    <div class="mb-3">
-                                        <label class="form-label">Имя</label>
-                                        <input type="text" class="form-control" value="Иван">
-                                    </div>
+                                <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="setting">
                                     <div class="mb-3">
                                         <label class="form-label">Фамилия</label>
-                                        <input type="text" class="form-control" value="Иванов">
+                                        <input type="text" class="form-control" name="last_name">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" value="ivanov@company.ru">
+                                        <label class="form-label">Имя</label>
+                                        <input type="text" class="form-control" name="first_name">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Отчество</label>
+                                        <input type="text" class="form-control" name="middle_name">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Электронная почта</label>
+                                        <input type="email" class="form-control" name="email">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Телефон</label>
-                                        <input type="tel" class="form-control" value="+7 (999) 123-45-67">
+                                        <input type="tel" class="form-control" name="phone_number">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Должность</label>
-                                        <input type="text" class="form-control" value="Менеджер по документообороту">
+                                        <input type="text" class="form-control" name="position">
                                     </div>
                                     <div class="text-end">
                                         <button type="submit" class="btn btn-dark">Сохранить изменения</button>
@@ -102,29 +109,23 @@
                         <div class="profile-card card">
                             <div class="card-body">
                                 <h5 class="card-title mb-4 fw-bold"><i class="fas fa-shield-alt me-2"></i>Безопасность</h5>
-                                
-                                <div class="alert alert-light d-flex align-items-center mb-4">
-                                    <i class="fas fa-info-circle me-3"></i>
-                                    <div>
-                                        <strong>Последний вход:</strong> 15.05.2023 в 14:30 с IP 192.168.1.1 (Москва, Россия)
-                                    </div>
-                                </div>
-                                
                                 <div class="mb-4">
                                     <h6 class="fw-bold"><i class="fas fa-key me-2"></i>Смена пароля</h6>
-                                    <form>
+                                    <form method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="security">
                                         <div class="mb-3">
                                             <label class="form-label">Текущий пароль</label>
-                                            <input type="password" class="form-control">
+                                            <input type="password" class="form-control" name="old_password">
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Новый пароль</label>
-                                            <input type="password" class="form-control">
+                                            <input type="password" class="form-control" name="password">
                                             <div class="form-text">Пароль должен содержать не менее 8 символов</div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Подтвердите новый пароль</label>
-                                            <input type="password" class="form-control">
+                                            <input type="password" class="form-control" name="password2">
                                         </div>
                                         <div class="text-end">
                                             <button type="submit" class="btn btn-dark">Изменить пароль</button>
