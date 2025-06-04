@@ -1,5 +1,8 @@
 from .models import DocumentTemplate, TemplateField, Document, ProcessType_Order
 from docxtpl import DocxTemplate
+from docx2pdf import convert
+from pdf2image import convert_from_path
+import os
 import datetime
 
 def update_process_document(document):
@@ -29,7 +32,11 @@ def create_document(title, author, organization, comment, file=None, template_na
         doc.render(context)
         doc.save("media/" + save_path)
 
-        Document.objects.create(name=title, author=author, workflow=workflow, comment=comment, status='approving', order=order[0], file=save_path)
+        temp_pdf = organization + "/" + author.position.name + "/" + title + ' ' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".pdf"
+
+        convert("media/" + save_path, "media/" + temp_pdf)
+
+        Document.objects.create(name=title, author=author, workflow=workflow, comment=comment, status='approving', order=order[0], file=save_path, pdf=temp_pdf)
     else:
         Document.objects.create(name=title, author=author, recipient=recipient, comment=comment, status='approving', file=file)
 

@@ -1,8 +1,15 @@
 body {
     background-color: #f8f9fa;
     color: #212529;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+.settings-header {
+    background-color: #fff;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+
 .navbar {
     background-color: #fff;
     border-bottom: 1px solid #dee2e6;

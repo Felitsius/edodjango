@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login as user_login, logout as user_logout
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -47,8 +48,10 @@ def profile_view(request):
             user.middle_name = middle_name
             user.email = email 
             user.phone_number = phone_number
-            posit = Positions.objects.create(name=position, organization=user.organization)
-            user.position = posit
+            posit = Positions.objects.get(name=user.position.name)
+            posit.name = position
+            posit.save()
+            user.position = Positions.objects.get(name=user.position.name)
             user.save()
         elif action == 'security':
             us = User.objects.get(username=request.user)
@@ -69,7 +72,6 @@ def profile_view(request):
         'all_documents': all_documents
     })
 
-
 @require_http_methods(["GET", "POST"])
 def documents_view(request):
     user = Profiles.objects.get(user=request.user.id)
@@ -82,8 +84,25 @@ def documents_view(request):
     position = Positions.objects.filter(organization=organization)
     positions_list = []
 
-    indocument_process = ProcessType_Order.objects.filter(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name))) if ProcessType_Order.objects.filter(profile=Profiles.objects.get(position=Positions.objects.get(name=user.position.name))) else -1
-    indocuments =  Document.objects.filter(Q(order=indocument_process) | Q(recipient=user, status='approving'))
+    try:
+        posit = Positions.objects.get(name=user.position.name)
+        profile = Profiles.objects.get(position=posit)
+        
+        # Получаем ПЕРВЫЙ подходящий ProcessType_Order или None
+        indocument_process = ProcessType_Order.objects.filter(profile=profile).first()
+        
+        # Если не найден, устанавливаем -1
+        if indocument_process is None:
+            indocument_process = -1
+        
+        # Фильтруем документы
+        indocuments = Document.objects.filter( Q(order=indocument_process) | Q(recipient=user, status='approving'))
+
+    except Positions.DoesNotExist:
+        indocuments = Document.objects.filter(recipient=user, status='approving')
+    except Profiles.DoesNotExist:
+        indocuments = Document.objects.filter(recipient=user, status='approving')
+
     indocument_list = []
 
     outdocuments = Document.objects.filter(author=user, status='approving')
@@ -195,6 +214,7 @@ def documents_view(request):
             'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
             'status': value.get_status_display(),
             'comment': value.comment,
+            'pdf': value.pdf.url if value.pdf.url else None,
             'history': route_approve
         }
         indocument_list.append(indocument_data)
@@ -248,6 +268,7 @@ def documents_view(request):
             'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
             'status': value.get_status_display(),
             'comment': value.comment,
+            'pdf': value.pdf.url if value.pdf.url else None,
             'history': route_approve
         }
         outdocument_list.append(outdocument_data)
@@ -301,14 +322,15 @@ def documents_view(request):
             'updated_at': localtime(value.updated_at).strftime('%d.%m.%Y %H:%M'),
             'status': value.get_status_display(),
             'comment': value.comment,
+            'pdf': value.pdf.url if value.pdf.url else None,
             'history': route_approve
         }
         approve_documents_list.append(approve_document_data)
 
     templates_json = json.dumps(templates_list)
-    indocument_json = json.dumps(indocument_list, cls=DjangoJSONEncoder)
-    outdocument_json = json.dumps(outdocument_list, cls=DjangoJSONEncoder)
-    approve_document_json = json.dumps(approve_documents_list, cls=DjangoJSONEncoder)
+    indocument_json = json.dumps(indocument_list)
+    outdocument_json = json.dumps(outdocument_list)
+    approve_document_json = json.dumps(approve_documents_list)
 
     return render(request, 'work/documents.html', {
         'user': user,

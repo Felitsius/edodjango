@@ -133,3 +133,20 @@ body {
     left: 4px;
     top: 4px;
 }
+
+.document-preview-lg {
+    overflow: auto; /* Добавляет scrollbar при необходимости */
+    width: 100%;   /* Занимает всю доступную ширину */
+    max-height: 80vh; /* Ограничивает высоту (можно настроить) */
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center; /* Центрирует изображение по горизонтали */
+    background: #f5f5f5; /* Фон для визуального контраста */
+}
+
+.document-preview-lg img {
+    max-width: 100%; /* Не выходит за границы контейнера */
+    height: auto;    /* Сохраняет пропорции */
+    object-fit: contain; /* Гарантирует, что всё изображение видно */
+}

@@ -221,6 +221,7 @@
                     }
                     //console.log(document_data[index]['history'][history]['user'])
                 }
+                console.log(document_data[index]['pdf'])
                 html += `
                     <div class="modal fade" id="viewDocumentModal-${document_id}" tabindex="-1">
                         <div class="modal-dialog modal-xl">
@@ -236,7 +237,12 @@
                                         <div class="col-md-8">
                                             <!-- Предпросмотр документа -->
                                             <div class="document-preview-lg">
-                                                <i class="fas fa-file-pdf fa-5x text-danger"></i>
+                                                <embed 
+                                                    src="${document_data[index]['pdf']}" 
+                                                    type="application/pdf" 
+                                                    width="100%" 
+                                                    height="500px"
+                                                >
                                             </div>
                                             <div class="d-flex justify-content-between mb-4">
                                                 <div>

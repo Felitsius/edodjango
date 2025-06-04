@@ -248,6 +248,7 @@ class Document(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата изменения")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, verbose_name="Статус документа")
     file = models.FileField(upload_to=document_upload_to, blank=True, null=True, verbose_name="Файл документа")
+    pdf = models.FileField(upload_to=document_upload_to, blank=True, null=True, verbose_name="Предпросмотр документа")
 
     class Meta:
         verbose_name = "Документ"
