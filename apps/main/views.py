@@ -396,7 +396,7 @@ def setting_procces_type_view(request):
         doctemplate_list = [list.name for list in DocumentTemplate.objects.all()]
         process = ProcessType.objects.all()
         order_process = ProcessType_Order.objects.all()
-
+        process_choice = [te for chek, te in ProcessType_Order.PROCESS_CHOICES]
         process_list = []
 
         for value in process:
@@ -483,6 +483,7 @@ def setting_procces_type_view(request):
             'users_json': users_json,
             'process_list': process_list, 
             'process_json': process_json,
+            'process_choice': process_choice,
             'doctemplate_list': doctemplate, 
             'doctemplate_json': doctemplate_json
         })

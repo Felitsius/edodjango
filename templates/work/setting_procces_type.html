@@ -339,6 +339,15 @@
                                                     </select>
                                                 </div>
                                                 <div class="mb-3">
+                                                    <label class="form-label">Процесс</label>
+                                                    <select class="form-select" name="user">
+                                                        <option selected>Выберите процесс</option>
+                                                        {% for process in process_choice %}
+                                                            <option>{{ process }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
                                                     <label class="form-label">Комментарий к этапу (необязательно)</label>
                                                     <input type="text" class="form-control" name="comment" placeholder="Например: 'Проверка юридической части'">
                                                 </div>

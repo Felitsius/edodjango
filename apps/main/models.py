@@ -202,12 +202,20 @@ class ProcessType(models.Model):
         verbose_name = 'Тип процесса'
         verbose_name_plural = 'Типы процессов'
 
-class ProcessType_Order(models.Model):
+class ProcessType_Order(models.Model): 
+    PROCESS_CHOICES = [
+        ('approve', 'Согласование'),
+        ('execution', 'Исполнение'),
+        ('regestration', 'Регистрация'),
+        ('acquaintance', 'Ознакомление'),
+    ]
+
     process_type = models.ForeignKey(ProcessType, on_delete=models.CASCADE, verbose_name='Тип процесса')
     profile = models.ForeignKey(Profiles, on_delete=models.CASCADE, verbose_name='Должность')
     organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация') 
     comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
     order = models.PositiveIntegerField(verbose_name='Порядок согласования')
+    process = models.CharField(max_length=20, choices=PROCESS_CHOICES, default='approve', verbose_name="Статус документа")
 
     def __str__(self):
         return f'{self.profile.position.name}'
