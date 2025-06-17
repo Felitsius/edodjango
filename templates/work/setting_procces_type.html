@@ -33,8 +33,6 @@
                     let option_html = '';
                     count += 1;               
 
-
-
                     for ( const key_users in mydata_users) {
                         option_html += '<option';
                         
@@ -44,6 +42,7 @@
                             option_html += '>' + mydata_users[key_users] + '</option>'
                         };
                     };
+
 
                     field_html += `
                         <div class="approval-step-edit approval-step">
@@ -60,6 +59,12 @@
                                         <label class="form-label">Ответственный</label>
                                         <select class="form-select" name="user">
                                         ` + option_html + `
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Процесс</label>
+                                        <select class="form-select" name="process">
+                                            <option selected>${mydata[key]['process'][value]}</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
@@ -149,13 +154,22 @@
                         <div class="mb-3">
                             <label class="form-label">Ответственный</label>
                             <select class="form-select" name="user">
-                                <option selected>Выберите пользователя</option>`;
+                                <option selected disabled>Выберите пользователя</option>`;
 
         for (const key_users in mydata_users) {
             html += '<option>'+ mydata_users[key_users] + '</option>';
         }                        
 
         html += `                        
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Процесс</label>
+                            <select class="form-select" name="process">
+                                <option selected disabled>Выберите процесс</option>
+                                {% for process in process_choice %}
+                                    <option>{{ process }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="mb-3">
@@ -332,7 +346,7 @@
                                                 <div class="mb-3">
                                                     <label class="form-label">Ответственный</label>
                                                     <select class="form-select" name="user">
-                                                        <option selected>Выберите пользователя</option>
+                                                        <option selected disabled>Выберите пользователя</option>
                                                         {% for list in users_list %}
                                                             <option>{{ list }}</option>
                                                         {% endfor %}
@@ -340,8 +354,8 @@
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">Процесс</label>
-                                                    <select class="form-select" name="user">
-                                                        <option selected>Выберите процесс</option>
+                                                    <select class="form-select" name="process">
+                                                        <option selected disabled>Выберите процесс</option>
                                                         {% for process in process_choice %}
                                                             <option>{{ process }}</option>
                                                         {% endfor %}

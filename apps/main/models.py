@@ -215,7 +215,7 @@ class ProcessType_Order(models.Model):
     organization = models.ForeignKey(Organizations, on_delete=models.CASCADE, verbose_name='Организация') 
     comment = models.TextField(verbose_name='Комментарий', blank=True, null=True)
     order = models.PositiveIntegerField(verbose_name='Порядок согласования')
-    process = models.CharField(max_length=20, choices=PROCESS_CHOICES, default='approve', verbose_name="Статус документа")
+    status = models.CharField(max_length=20, choices=PROCESS_CHOICES, default='approve', verbose_name="Процесс")
 
     def __str__(self):
         return f'{self.profile.position.name}'
@@ -235,7 +235,9 @@ class Document(models.Model):
     STATUS_APPROVING = 'approving'
     STATUS_APPROVED = 'approved'
     STATUS_REJECTED = 'rejected'
-    STATUS_ARCHIVED = 'archived'
+    STATUS_EXECUTION = 'execution'
+    STATUS_REGESTRATION = 'regestration'
+    STATUS_ACQUAINTANCE = 'acquaintance'
     
     STATUS_CHOICES = [
         (STATUS_DRAFT, 'Черновик'),
@@ -243,7 +245,9 @@ class Document(models.Model):
         (STATUS_APPROVING, 'На согласовании'),
         (STATUS_APPROVED, 'Утвержден'),
         (STATUS_REJECTED, 'Отклонен'),
-        (STATUS_ARCHIVED, 'В архиве'),
+        (STATUS_EXECUTION, 'На исполнение'),
+        (STATUS_REGESTRATION, 'На регестрации'),
+        (STATUS_ACQUAINTANCE, 'На ознакомлении'),
     ]
 
     name = models.CharField(max_length=255, verbose_name='Название документа')

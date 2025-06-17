@@ -133,8 +133,19 @@ def documents_view(request):
             approved_id = request.POST.get('approved_id')
             comment = request.POST.get('comment')
             document = Document.objects.get(id=approved_id)
+            process = ProcessType_Order.objects.get(process_type=document.workflow, profile=user)
+            
+            if process.status == "Согласование":
+                status = 'Согласованно'
+            elif process.status == "Исполнение":
+                status = 'Исполненно'
+            elif process.status == "Регистрация":
+                status = 'Зарегистрированно'
+            elif process.status == "Ознакомление":   
+                status = 'Ознакомлен' 
 
-            DocumentHistory.objects.create(document=document, user=user, action="Согласовано", description=comment)
+            DocumentHistory.objects.create(document=document, user=user, action=status, description=comment)
+
             if document.workflow:
                 update_process_document(document)
             elif document.recipient:
@@ -146,6 +157,9 @@ def documents_view(request):
 
             DocumentHistory.objects.create(document=document, user=user, action="Отказано", description=comment)
             Document.objects.filter(id=approved_id).update(order=None,status='rejected')
+        elif action == 'cancel_document':
+            id_document = request.POST.get('id_document')
+            Document.objects.get(id=id_document).delete()
 
         return redirect('/documents')
 
@@ -200,6 +214,7 @@ def documents_view(request):
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
+                'process': user_route.get_status_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -253,6 +268,7 @@ def documents_view(request):
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
+                'process': user_route.get_status_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -308,6 +324,7 @@ def documents_view(request):
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
+                'process': user_route.get_status_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -413,8 +430,12 @@ def setting_procces_type_view(request):
                 'users_comment': [
                     users.comment for users in order_process 
                     if users.process_type == value
+                ],
+                'process': [
+                    process_order.get_status_display() for process_order in ProcessType_Order.objects.filter(process_type=value)
                 ]
             }
+            print(process_order.process for process_order in ProcessType_Order.objects.filter(process_type=value))
             process_list.append(process_data)  
 
         if request.method == 'POST':
@@ -426,12 +447,14 @@ def setting_procces_type_view(request):
                 description = request.POST.get('description')
                 template = DocumentTemplate.objects.get(name=request.POST.get('template'))
                 list_user = request.POST.getlist('user')
+                list_process = request.POST.getlist('process')
                 comment = request.POST.getlist('comment')
                 order = 0
+
                 process_type = ProcessType.objects.create(name=name, description=description, template=template,count_position=len(list_user))
                 for i in range(len(list_user)):
                     profile = Profiles.objects.get(position=Positions.objects.get(name=list_user[i]))
-                    ProcessType_Order.objects.create(process_type=process_type, profile=profile, organization=organization, comment= comment[i], order=i)
+                    ProcessType_Order.objects.create(process_type=process_type, profile=profile, organization=organization, comment= comment[i], order=i, status=list_process[i])
             elif action == 'delete_process':
                 deleteID = request.POST.get('deleteID')
                 ProcessType.objects.get(id=deleteID).delete()
@@ -441,6 +464,7 @@ def setting_procces_type_view(request):
                 description = request.POST.get('description')
                 template = DocumentTemplate.objects.get(name=request.POST.get('template'))
                 list_user = request.POST.getlist('user')
+                list_process = request.POST.getlist('process')
                 comment = request.POST.getlist('comment')
                 order = 0
 
@@ -450,7 +474,7 @@ def setting_procces_type_view(request):
                 for i in range(len(list_user)):
                     order = i + 1
                     position = Positions.objects.get(name=list_user[i])
-                    ProcessType_Order.objects.create(process_type=process_type, position=position, organization=organization, comment= comment[i], order=order)
+                    ProcessType_Order.objects.create(process_type=process_type, position=position, organization=organization, comment= comment[i], order=order, status=list_process[i])
 
             return redirect('/setting_procces_type')
         
