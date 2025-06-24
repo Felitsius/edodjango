@@ -592,7 +592,15 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Процесс</label>
+                                    <select class="form-select" name="process">
+                                        <option selected disabled>Выберите процесс</option>
+                                        {% for choice in process %}
+                                            <option>{{ choice }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Комментарий</label>
                                     <textarea class="form-control" rows="3" name="comment" placeholder="Введите комментарий к документу"></textarea>
@@ -600,8 +608,8 @@
                                 
                                 <div class="mb-4">
                                     <label class="form-label fw-bold">Файл</label>
-                                    <input type="file" class="form-control" name="file" accept=".doc,.docx,.pdf">
-                                    <div class="form-text">Поддерживаемые форматы: .doc, .docx, .pdf</div>
+                                    <input type="file" class="form-control" name="file" accept=".pdf">
+                                    <div class="form-text">Поддерживаемые форматы: .pdf</div>
                                 </div>
 
                                 <div class="modal-footer">

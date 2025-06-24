@@ -23,7 +23,19 @@ def work_view(request):
 @login_required
 def dashboard_view(request):
     user = Profiles.objects.get(user=request.user.id)
-    return render(request, 'work/dashboard.html', { 'user': user })
+    all_documents = len(Document.objects.filter(author=user))
+    approved_documents = len(Document.objects.filter(author=user, status='approved'))
+    work_documents = len(Document.objects.filter(author=user, status='in_work'))
+    rejected_documents = len(Document.objects.filter(author=user, status='rejected'))
+    last_documents = Document.objects.filter(author=user).order_by('-created_at') if Document.objects.filter(author=user).order_by('-created_at') is not None else -1
+    statistics = {
+        'all': all_documents,
+        'approved': approved_documents,
+        'work': work_documents,
+        'rejected': rejected_documents,
+        'last_documents': last_documents[:5],
+    }
+    return render(request, 'work/dashboard.html', { 'user': user, 'statistics': statistics })
 
 @login_required
 def profile_view(request):
@@ -81,8 +93,10 @@ def documents_view(request):
     template_fields = TemplateField.objects.all()
     templates_list = []
 
-    position = Positions.objects.filter(organization=organization)
+    position = Profiles.objects.filter(organization=organization)
     positions_list = []
+
+    process_choice = [te for chek, te in ProcessType_Order.PROCESS_CHOICES]
 
     try:
         posit = Positions.objects.get(name=user.position.name)
@@ -96,18 +110,17 @@ def documents_view(request):
             indocument_process = -1
         
         # Фильтруем документы
-        indocuments = Document.objects.filter( Q(order=indocument_process) | Q(recipient=user, status='approving'))
+        indocuments = Document.objects.filter( Q(order=indocument_process) | Q(recipient=user, status='in_work'))
 
     except Positions.DoesNotExist:
-        indocuments = Document.objects.filter(recipient=user, status='approving')
+        indocuments = Document.objects.filter(recipient=user, status='in_work')
     except Profiles.DoesNotExist:
-        indocuments = Document.objects.filter(recipient=user, status='approving')
+        indocuments = Document.objects.filter(recipient=user, status='in_work')
 
     indocument_list = []
 
-    outdocuments = Document.objects.filter(author=user, status='approving')
+    outdocuments = Document.objects.filter(author=user, status='in_work')
     outdocument_list = []
-
     approve_documents = Document.objects.filter(author=user, status__in=['approved', 'rejected'])
     approve_documents_list = []
    
@@ -127,21 +140,25 @@ def documents_view(request):
             recipient = Profiles.objects.get(position=Positions.objects.get(name=request.POST.get('user')))
             comment = request.POST.get('comment')
             file = request.FILES.get('file')
+            process_choice = request.POST.get('process')
 
-            create_document(title=name, author=user, organization=organization.name,comment=comment, recipient=recipient, file=file)
+            create_document(title=name, author=user, organization=organization.name,comment=comment, recipient=recipient, file=file, process=process_choice)
         elif action == 'approve_document':
             approved_id = request.POST.get('approved_id')
             comment = request.POST.get('comment')
             document = Document.objects.get(id=approved_id)
-            process = ProcessType_Order.objects.get(process_type=document.workflow, profile=user)
-            
-            if process.status == "Согласование":
+            if document.recipient is None:
+                process = ProcessType_Order.objects.get(process_type=document.workflow, profile=user).status
+            else: 
+                process = document.processRecipient
+
+            if process == "Согласование":
                 status = 'Согласованно'
-            elif process.status == "Исполнение":
+            elif process == "Исполнение":
                 status = 'Исполненно'
-            elif process.status == "Регистрация":
+            elif process == "Регистрация":
                 status = 'Зарегистрированно'
-            elif process.status == "Ознакомление":   
+            elif process == "Ознакомление":   
                 status = 'Ознакомлен' 
 
             DocumentHistory.objects.create(document=document, user=user, action=status, description=comment)
@@ -165,7 +182,8 @@ def documents_view(request):
 
 
     for value in position:
-        positions_list.append(value.name)  
+        positions_list.append(value.position.name)  
+
 
     for value in process_type:
         template_data = {
@@ -214,7 +232,7 @@ def documents_view(request):
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
-                'process': user_route.get_status_display(),
+                'process': user_route.get_status_display() if user_route != 0 else value.get_processRecipient_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -262,13 +280,13 @@ def documents_view(request):
                     first = True
                     if history.action == 'Отказано':
                         reject = True
-
+            print(user_route)
             routeApprove_data = {
                 'position': name,
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
-                'process': user_route.get_status_display(),
+                'process': user_route.get_status_display() if user_route != 0 else value.get_processRecipient_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -324,7 +342,7 @@ def documents_view(request):
                 'name': user_route.profile.short_name() if value.workflow else value.recipient.short_name(),
                 'document_id': document_id,
                 'action': action,
-                'process': user_route.get_status_display(),
+                'process': user_route.get_status_display() if user_route != 0 else value.get_processRecipient_display(),
                 'description': description,
                 'created_at': created_at
             }
@@ -348,7 +366,7 @@ def documents_view(request):
     indocument_json = json.dumps(indocument_list)
     outdocument_json = json.dumps(outdocument_list)
     approve_document_json = json.dumps(approve_documents_list)
-
+    
     return render(request, 'work/documents.html', {
         'user': user,
         'templates': templates_list,
@@ -359,7 +377,8 @@ def documents_view(request):
         'outdocument_list': outdocument_list,
         'outdocument_json': outdocument_json,
         'approve_documents_list': approve_documents_list,
-        'approve_document_json': approve_document_json
+        'approve_document_json': approve_document_json,
+        'process': process_choice,
     })
 
 def login_view(request):
@@ -370,7 +389,7 @@ def login_view(request):
         user = authenticate(request, username=login, password=password)
         if user is not None:
             user_login(request, user)
-            return redirect('/')
+            return redirect('/dashboard')
         else:
             return render(request, 'auth/login.html')
         
@@ -399,7 +418,7 @@ def reg_view(request):
             user = authenticate(request, username=login, password=password)
             if user is not None:
                 user_login(request, user)
-                return HttpResponse('')
+                return redirect('/dashboard')
             else:
                 return render(request, 'auth/login.html')
     return render(request, 'auth/reg.html', { 'organizations': organizations })
@@ -408,7 +427,7 @@ def reg_view(request):
 def setting_procces_type_view(request):
     user = Profiles.objects.get(user=request.user.id)
     if user.user.is_superuser:
-        users_list = [users.name for users in Positions.objects.all()]
+        users_list = [users.position.name for users in Profiles.objects.filter(organization=user.organization)]
         doctemplate = DocumentTemplate.objects.all()
         doctemplate_list = [list.name for list in DocumentTemplate.objects.all()]
         process = ProcessType.objects.all()

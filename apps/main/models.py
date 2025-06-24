@@ -144,7 +144,8 @@ class Profiles(models.Model):
     def short_name(self):
         parts = self.full_name.split()  # Разбиваем строку по пробелам
         if len(parts) != 3:
-            return self.full_name()  # Если ФИО не состоит из 3 частей, возвращаем как есть
+            full_name = self.full_name()
+            return full_name # Если ФИО не состоит из 3 частей, возвращаем как есть
         
         last_name = parts[0]
         initials = f"{parts[1][0]}.{parts[2][0]}."
@@ -250,10 +251,18 @@ class Document(models.Model):
         (STATUS_ACQUAINTANCE, 'На ознакомлении'),
     ]
 
+    PROCESS_CHOICES = [
+        ('approve', 'Согласование'),
+        ('execution', 'Исполнение'),
+        ('regestration', 'Регистрация'),
+        ('acquaintance', 'Ознакомление'),
+    ]
+
     name = models.CharField(max_length=255, verbose_name='Название документа')
     author = models.ForeignKey(Profiles, on_delete=models.PROTECT, related_name='authored_documents', verbose_name="Автор документа")
     workflow = models.ForeignKey(ProcessType, on_delete=models.CASCADE, verbose_name='Тип процесса', blank=True, null=True)
     recipient = models.ForeignKey(Profiles, on_delete=models.PROTECT, verbose_name="Получатель документа (Не обязательно)", blank=True, null=True)
+    processRecipient = models.CharField(max_length=20, choices=PROCESS_CHOICES, verbose_name="Процесс для получателя", blank=True, null=True)
     order = models.ForeignKey(ProcessType_Order, on_delete=models.PROTECT, verbose_name="Этап", blank=True, null=True)
     comment = models.TextField(verbose_name='Описание', null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
